@@ -1,0 +1,31 @@
+{
+  "name": "garden-guide",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Self-hosted, single-instance gardening guide.",
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter \"./apps/*\" run dev",
+    "build": "pnpm -r --filter \"./packages/*\" run build && pnpm -r --filter \"./apps/*\" run build",
+    "test": "pnpm -r --filter \"!@garden-guide/e2e\" run test",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "e2e": "pnpm --filter @garden-guide/e2e run test",
+    "db:migrate": "pnpm --filter @garden-guide/backend run db:migrate",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["argon2", "better-sqlite3", "esbuild"]
+  }
+}
