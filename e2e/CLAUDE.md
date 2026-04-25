@@ -30,10 +30,19 @@ From [/docs/ARCHITECTURE.md#testing](../docs/ARCHITECTURE.md#testing):
 
 1. Bootstrap admin via console token → log in
 2. Admin issues invite → second user registers via invite link
-3. Add plant (with photo) → AI care plan suggestion → user accepts a subset
-4. Calendar shows recurring + one-off tasks for the requested window
-5. Journal entry creation, with attribution to the logged-in user
+3. Add plant (with photo) → AI care plan suggestion → user accepts a subset *(also runs on mobile)*
+4. Calendar shows recurring + one-off tasks for the requested window *(also runs on mobile)*
+5. Journal entry creation, with attribution to the logged-in user *(also runs on mobile)*
 6. Web Push subscription roundtrip (delivery mocked at the network layer)
+
+## Viewports
+
+Playwright `projects` covers two viewports:
+
+- **`desktop-chrome`** — full-size Chromium, all specs run here. Desktop is the primary surface (CONCEPT.md).
+- **`mobile-safari`** — `devices['iPhone 13']`. Runs flows 3, 4, 5 (add plant, calendar, journal) to catch responsive regressions on the layouts most likely to be used in the garden. Mobile is supported, not primary.
+
+Filter to a single project with `pnpm e2e --project=mobile-safari`. Tag mobile-only assertions with `test.skip(({ isMobile }) => !isMobile, '...')` rather than splitting specs.
 
 ## Key conventions
 

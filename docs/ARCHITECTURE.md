@@ -410,9 +410,10 @@ If the server is offline when a job should fire, the next run picks it up — `n
 - **Single-page app.** Vite builds a static bundle; the backend serves it for any non-`/api` path.
 - **Routing.** React Router data router, with one route module per top-level page. Loaders fetch via TanStack Query.
 - **State.** Server state in TanStack Query; local UI state in component state or small Zustand stores where needed (e.g. calendar zoom).
-- **Calendar component.** Custom — built on `date-fns`, no big calendar library. Three layouts share a common task/journal-entry pipeline:
-  - Year: 12-cell grid, each cell a mini-month with task strips.
-  - Quarter (3-month): horizontal strip, primary planning view.
+- **Responsive — desktop primary, mobile supported.** Tailwind breakpoints (`sm`, `md`, `lg`). Layouts are designed for desktop first; smaller viewports collapse to single-column with ≥44px tap targets. Phone has to work, but it isn't where the experience is tuned. No separate mobile codebase.
+- **Calendar component.** Custom — built on `date-fns`, no big calendar library. Three layouts share a common task/journal-entry pipeline; each adapts to viewport width:
+  - Year: 12-cell grid (4×3 desktop, 2×6 phone), each cell a mini-month with task strips.
+  - Quarter (3-month): horizontal strip on desktop, vertical stack on phone, primary planning view.
   - Month: full grid with day cells.
 - **Photo capture.** `<input type="file" accept="image/*" capture="environment">` for mobile camera; drag-and-drop on desktop.
 - **Offline.** Not required in v1. Service worker registered only for Web Push.
@@ -479,5 +480,6 @@ All config via environment variables, parsed and validated with Zod at startup. 
 - **Unit**: pure logic in services (recurring-task expansion, calendar merge, prompt builders). Vitest.
 - **Integration**: Fastify routes against an in-memory SQLite, exercising real Drizzle queries. Vitest.
 - **E2E**: Playwright against a Dockerized instance, covering the golden flows: invite → register → add plant → AI care plan → calendar → journal.
+- **Mobile viewport coverage.** All specs run on desktop Chrome. A subset — add plant + photo, journal entry, calendar navigation — also runs on a phone viewport (`iPhone 13`) to catch responsive regressions. Mobile is supported, not primary.
 - **No mocked database in tests.** Use a real SQLite file (or `:memory:`) so migrations and queries are exercised.
 

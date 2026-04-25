@@ -32,6 +32,7 @@ src/
 - **Calendar is custom**, built on `date-fns`. No `react-big-calendar`/`FullCalendar`. The three views (year, quarter, month) share one task-and-journal merging pipeline.
 - **Routing via React Router data router.** Loaders fetch through the same `QueryClient` so navigations show cached data instantly.
 - **No SSR, no Next.js.** SPA only; the backend serves `index.html` for any non-`/api` path.
+- **Responsive — desktop primary, mobile supported.** Design for desktop first, then verify the layout collapses cleanly to a single-column phone view. Use Tailwind `sm`/`md`/`lg` breakpoints. Tap targets ≥ 44px on touch viewports. Smoke-check new screens at `iPhone 13` viewport before declaring done; mobile must work, but the experience is tuned for desktop.
 - **Photo input** uses `<input type="file" accept="image/*" capture="environment">` so mobile users get the camera directly.
 - **Theme**: light + dark, system-default. Calm palette, photo-forward layout (CONCEPT.md).
 

@@ -85,6 +85,7 @@ All AI output is treated as a *suggestion*. The source of truth is what the user
 - **Personal, not generic** — the app describes the user's specific garden, not a global plant encyclopedia.
 - **Manual is first-class** — users who don't want AI can use the app fully without it.
 - **Calendar is the home screen** — gardening is time-driven; the UI should reflect that.
+- **Desktop-first, mobile-supported** — primary use is on a desktop or laptop. The web app is fully responsive so it also works on a phone in the garden, but desktop is where the experience is tuned.
 - **Beautiful and calm** — plants, photos, and seasons; not dashboards and KPIs.
 - **Self-hostable** — runs on a single small server; data stays with the user.
 
