@@ -23,13 +23,23 @@ if [ ! -f "$SECRET_FILE" ]; then
   fi
 fi
 
+# Pull in keys from a local .env if present (gitignored).
+if [ -f ".env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
+fi
+
 export NODE_ENV="${NODE_ENV:-development}"
 export PORT="${PORT:-5600}"
 export LOG_LEVEL="${LOG_LEVEL:-info}"
 export DATABASE_PATH="${DATABASE_PATH:-./data/garden-guide.db}"
 export PHOTO_DIR="${PHOTO_DIR:-./data/photos}"
 export PUBLIC_URL="${PUBLIC_URL:-http://localhost:5601}"
-export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-sk-ant-not-yet-configured}"
+export LLM_PROVIDER="${LLM_PROVIDER:-openai}"
+export OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
 export VAPID_PUBLIC_KEY="${VAPID_PUBLIC_KEY:-not-yet-configured}"
 export VAPID_PRIVATE_KEY="${VAPID_PRIVATE_KEY:-not-yet-configured}"
 export SESSION_SECRET="$(cat "$SECRET_FILE")"

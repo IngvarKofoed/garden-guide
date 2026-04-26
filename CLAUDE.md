@@ -2,7 +2,7 @@
 
 Self-hosted, single-instance web app: a private gardening guide with plants, zones, recurring/one-off care tasks, journal, calendar views, and scoped LLM assistance. One shared garden per instance, multiple users, invite-only registration.
 
-> **Read first:** [docs/CONCEPT.md](docs/CONCEPT.md) for product scope. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for tech stack, data model, API, deployment.
+> **Read first:** [docs/CONCEPT.md](docs/CONCEPT.md) for product scope. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for tech stack, data model, API, deployment. [docs/STYLE.md](docs/STYLE.md) for the visual design system (frontend work).
 >
 > **Status:** docs + folder layout in place; no code scaffolded yet.
 
@@ -15,7 +15,7 @@ apps/
 packages/
   shared/         # Zod schemas + inferred types
 e2e/              # Playwright against a Dockerized instance
-docs/             # CONCEPT.md, ARCHITECTURE.md
+docs/             # CONCEPT.md, ARCHITECTURE.md, STYLE.md
 data/             # runtime: SQLite + photos (gitignored)
 ```
 
@@ -52,7 +52,7 @@ Per-package commands use `pnpm --filter <name>` — see the relevant sub-`CLAUDE
 
 - **One language, one source of truth for shapes.** All cross-network types are Zod schemas in `@garden-guide/shared`. Backend validates incoming requests with them; frontend validates forms with them.
 - **No audit columns.** Database tables don't track `created_by`/`updated_by`/edits. The single exception is `journal_entries.created_by` (user-facing attribution).
-- **Recurring care tasks store `MM-DD`**, not full dates. The server expands them into the requested calendar window on read.
+- **Recurring care tasks store `MM-S` month slots** (S = 1 early / 2 mid / 3 late), not full dates. The server expands them into concrete day ranges per year on read.
 - **Tests use real SQLite**, never mocks of our own database or backend.
 - **Self-hosted operator backs up `data/`.** No in-app backup wizard; export endpoint streams JSON + photos for portability.
 
@@ -60,7 +60,7 @@ Per-package commands use `pnpm --filter <name>` — see the relevant sub-`CLAUDE
 
 | Skill | When |
 |-------|------|
-| `claude-api` | Editing code under `apps/backend/src/modules/ai/**` (Anthropic SDK calls). |
+| `claude-api` | Only when implementing or editing the Anthropic provider in `apps/backend/src/modules/ai/providers/anthropic.ts`. (OpenAI is the default; the skill auto-skips OpenAI files.) |
 | `frontend-design` | Building or restyling UI in `apps/frontend/`. |
 | `security-review` | Before merging changes to auth, sessions, invites, password handling. |
 | `simplify` | After a non-trivial implementation, to catch over-abstraction. |

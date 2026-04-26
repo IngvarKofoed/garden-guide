@@ -75,7 +75,7 @@ Reminders triggered when a care task's date range starts (and optionally as it e
 The LLM is used in three well-scoped places, not as a freeform chatbot:
 
 - **Plant identification** — from photo and/or partial name, return ranked candidates.
-- **Care plan generation** — from a confirmed plant + the user's climate/hardiness zone, propose care tasks with date ranges and short rationale.
+- **Care plan generation** — from a confirmed plant + the gardener's free-form notes (climate, soil, microclimate quirks), propose care tasks with date ranges and short rationale.
 - **Care plan refinement** — answer "why this date range?" and adjust based on user feedback ("my prunus blooms two weeks earlier than yours says").
 
 All AI output is treated as a *suggestion*. The source of truth is what the user accepts into their garden.
@@ -100,7 +100,6 @@ All AI output is treated as a *suggestion*. The source of truth is what the user
 
 Decisions still to make:
 
-- **Climate / hardiness zone.** The LLM needs this to give good care-date suggestions. Likely set once on the garden (since the garden is shared), with optional per-plant override for microclimates.
 - **Photo timeline.** Allow multiple photos per plant over time, shown as a chronological strip — small but delightful. Worth doing in v1?
 - **Weather integration.** "Don't water today, it rained 12mm." Powerful but adds an external dependency and an API key. Probably v2.
 

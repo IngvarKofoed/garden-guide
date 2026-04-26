@@ -37,8 +37,9 @@ Domains: `auth`, `users`, `invites`, `zones`, `plants`, `photos`, `tasks`, `jour
 
 - **Zod schemas live in `@garden-guide/shared`**, not here. Import them; don't redeclare.
 - **No audit columns** anywhere — no `created_by`, no `updated_by`, no edit history. The single exception is `journal_entries.created_by`, kept for user-facing attribution per CONCEPT.md.
-- **Recurring tasks use `MM-DD` strings** (`recur_start_md`, `recur_end_md`) — year-agnostic. Don't materialize per-year rows.
+- **Recurring tasks use `MM-S` month slots** (`recur_start_slot`, `recur_end_slot`) where S = 1 early / 2 mid / 3 late — year-agnostic. The calendar service expands them to concrete day ranges per year. Don't materialize per-year rows.
 - **AI suggestion endpoints don't write to the DB.** They generate; the user accepts; the *create* routes persist them.
+- **LLM provider is pluggable.** Routes and services depend on the `LLMProvider` interface in `src/modules/ai/provider.ts`, never on a vendor SDK directly. New providers go in `src/modules/ai/providers/`. Selection via `LLM_PROVIDER` env (default `openai`).
 - **Tests use a real SQLite** (`:memory:` or temp file), never mocks. Migrations run before each suite.
 - **No job queue.** Single in-process `node-cron`. Idempotency for recurring notifications via `notification_log` keyed by `(care_task_id, year)`.
 - **Photos served behind auth** through Fastify routes — never expose `data/photos/` as a static mount.
@@ -50,7 +51,9 @@ Validated by `config.ts` at boot — server refuses to start if any are missing 
 - `DATABASE_PATH`, `PHOTO_DIR`
 - `SESSION_SECRET`
 - `PUBLIC_URL`
-- `ANTHROPIC_API_KEY`
+- `LLM_PROVIDER` (default `openai`), `LLM_MODEL` (optional)
+- `OPENAI_API_KEY` (required when `LLM_PROVIDER=openai`)
+- `ANTHROPIC_API_KEY` (required when `LLM_PROVIDER=anthropic`)
 - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`
 - `LOG_LEVEL` (default `info`), `PORT` (default `3000`)
 
@@ -64,6 +67,6 @@ Validated by `config.ts` at boot — server refuses to start if any are missing 
 
 ## When to invoke skills
 
-- **`claude-api`** — when adding or editing code under `src/modules/ai/**` (Anthropic SDK calls). Ensures prompt caching, current model IDs, structured tool-use output.
+- **`claude-api`** — only when implementing or editing the Anthropic provider (`src/modules/ai/providers/anthropic.ts`). The default provider is OpenAI; the skill auto-skips OpenAI files.
 - **`security-review`** — before merging changes to auth, sessions, password handling, or invite flow.
 - **`simplify`** — after a non-trivial implementation, to catch over-abstraction and dead helpers.

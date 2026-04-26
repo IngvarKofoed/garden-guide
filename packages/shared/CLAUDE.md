@@ -41,7 +41,7 @@ src/
 - Schemas are imported as **types AND runtime values** (`Schema.parse(...)`). Use `export const` / `export type`, never `export type` for the schema itself.
 - When adding an `ActionType` member, update **three** places in lockstep: this package, the backend `CHECK` constraint (via a migration), and any seeded help text in the frontend. They are not auto-synced.
 - Date string formats are distinct schemas:
-  - `MM-DD` → year-agnostic recurrence (`recur_start_md`, `recur_end_md`)
+  - `MM-S` → year-agnostic month slot for recurring care tasks (`recur_start_slot`, `recur_end_slot`); S = 1 early / 2 mid / 3 late
   - `YYYY-MM-DD` → absolute calendar day (`due_date`, `occurred_on`)
   - ISO-8601 → timestamps
   Don't merge their regexes.
