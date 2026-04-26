@@ -1,11 +1,45 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { Layout } from './components/Layout';
+import { LoginPage } from './features/auth/LoginPage';
+import { RegisterPage } from './features/auth/RegisterPage';
+import { RequireAuth } from './features/auth/RequireAuth';
+import { PlantsPage } from './features/plants/PlantsPage';
+import { ZonesPage } from './features/zones/ZonesPage';
 import { Home } from './routes/Home';
 
 const router = createBrowserRouter([
   {
-    path: '/',
-    element: <Home />,
+    element: <Layout />,
+    children: [
+      {
+        path: '/',
+        element: (
+          <RequireAuth>
+            <Home />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: '/zones',
+        element: (
+          <RequireAuth>
+            <ZonesPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: '/plants',
+        element: (
+          <RequireAuth>
+            <PlantsPage />
+          </RequireAuth>
+        ),
+      },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+      { path: '*', element: <Navigate to="/" replace /> },
+    ],
   },
 ]);
 

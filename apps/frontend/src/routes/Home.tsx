@@ -1,34 +1,59 @@
-import { useQuery } from '@tanstack/react-query';
-import { getHealth } from '../lib/api';
+import { Link } from 'react-router-dom';
+import { Card } from '../components/ui';
+import { useMe } from '../lib/auth';
+import { usePlants } from '../features/plants/hooks';
+import { useZones } from '../features/zones/hooks';
 
 export function Home() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['health'],
-    queryFn: getHealth,
-  });
+  const me = useMe();
+  const zones = useZones();
+  const activePlants = usePlants({ archived: 'false' });
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
-      <h1 className="text-4xl font-semibold tracking-tight">Garden Guide</h1>
-      <p className="mt-3 text-stone-600 dark:text-stone-400">
-        Your private guide for your garden.
-      </p>
-
-      <section className="mt-10 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-stone-500">
-          Server status
-        </h2>
-        <p className="mt-2 text-lg">
-          {isLoading && 'Checking…'}
-          {isError && <span className="text-red-600">Backend unreachable</span>}
-          {data && (
-            <span>
-              <span className="font-medium">{data.status}</span>
-              <span className="ml-2 text-stone-500">v{data.version}</span>
-            </span>
-          )}
+    <div className="flex flex-col gap-8">
+      <header>
+        <h1 className="text-4xl font-semibold tracking-tight">
+          Hello, {me.data?.displayName?.split(' ')[0] ?? 'there'}
+        </h1>
+        <p className="mt-2 text-stone-600 dark:text-stone-400">
+          Your private guide for your garden.
         </p>
-      </section>
-    </main>
+      </header>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Link to="/zones">
+          <StatCard
+            label="Zones"
+            value={zones.data?.length ?? '—'}
+            description="Areas of the garden you've named."
+          />
+        </Link>
+        <Link to="/plants">
+          <StatCard
+            label="Plants"
+            value={activePlants.data?.length ?? '—'}
+            description="Active plants and trees."
+          />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  description,
+}: {
+  label: string;
+  value: number | string;
+  description: string;
+}) {
+  return (
+    <Card className="p-6 transition-colors hover:bg-stone-50 dark:hover:bg-stone-800/50">
+      <p className="text-xs font-medium uppercase tracking-wide text-stone-500">{label}</p>
+      <p className="mt-2 text-4xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-1 text-sm text-stone-500">{description}</p>
+    </Card>
   );
 }

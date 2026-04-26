@@ -9,7 +9,8 @@
     "noEmit": true,
     "allowImportingTsExtensions": false,
     "useDefineForClassFields": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "exactOptionalPropertyTypes": false
   },
   "include": ["src"]
 }
