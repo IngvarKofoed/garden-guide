@@ -1,5 +1,6 @@
 import {
   type ApiError,
+  type CalendarOccurrence,
   type CarePlanRequest,
   type CarePlanResponse,
   type CareTask,
@@ -185,6 +186,13 @@ export function createTask(
     method: 'POST',
     body,
   });
+}
+
+// --- Calendar ---
+
+export function listCalendar(from: string, to: string): Promise<CalendarOccurrence[]> {
+  const params = new URLSearchParams({ from, to });
+  return request<CalendarOccurrence[]>(`/api/v1/calendar?${params.toString()}`);
 }
 
 // --- AI ---

@@ -31,6 +31,9 @@ export function Layout() {
               <SidebarLink to="/plants" icon={<PlantsIcon />}>
                 Plants
               </SidebarLink>
+              <SidebarLink to="/calendar" icon={<CalendarIcon />}>
+                Calendar
+              </SidebarLink>
               <SidebarLink to="/settings" icon={<SettingsIcon />}>
                 Settings
               </SidebarLink>
@@ -77,6 +80,7 @@ export function Layout() {
           <BottomLink to="/" icon={<HomeIcon />} label="Home" />
           <BottomLink to="/zones" icon={<ZonesIcon />} label="Zones" />
           <BottomLink to="/plants" icon={<PlantsIcon />} label="Plants" />
+          <BottomLink to="/calendar" icon={<CalendarIcon />} label="Calendar" />
           <BottomLink to="/settings" icon={<SettingsIcon />} label="Settings" />
         </nav>
       )}
@@ -197,6 +201,37 @@ function PlantsIcon() {
         strokeWidth="1.5"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+      <rect
+        x="3.5"
+        y="5.5"
+        width="17"
+        height="15"
+        rx="2.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M3.5 10h17"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8 3.5v3M16 3.5v3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <circle cx="8.5" cy="14" r="0.9" fill="currentColor" />
+      <circle cx="13" cy="14" r="0.9" fill="currentColor" />
+      <circle cx="8.5" cy="17.5" r="0.9" fill="currentColor" />
     </svg>
   );
 }

@@ -112,6 +112,7 @@ export async function getCalendar(
       notes: careTasks.notes,
       plantName: plants.name,
       plantSpecies: plants.species,
+      plantIconPhotoId: plants.iconPhotoId,
       zoneId: plants.zoneId,
     })
     .from(careTasks)
@@ -164,6 +165,7 @@ export async function getCalendar(
           plantId: r.plantId,
           plantName: r.plantName,
           plantSpecies: r.plantSpecies ?? null,
+          plantIconPhotoId: r.plantIconPhotoId ?? null,
           zoneId: r.zoneId ?? null,
           actionType: r.actionType as CalendarOccurrence['actionType'],
           customLabel: r.customLabel ?? null,
@@ -195,6 +197,7 @@ export async function getCalendar(
         plantId: r.plantId,
         plantName: r.plantName,
         plantSpecies: r.plantSpecies ?? null,
+        plantIconPhotoId: r.plantIconPhotoId ?? null,
         zoneId: r.zoneId ?? null,
         actionType: r.actionType as CalendarOccurrence['actionType'],
         customLabel: r.customLabel ?? null,

@@ -115,6 +115,7 @@ const CalendarOccurrenceBase = z.object({
   plantId: UlidSchema,
   plantName: z.string(),
   plantSpecies: z.string().nullable(),
+  plantIconPhotoId: UlidSchema.nullable(),
   zoneId: UlidSchema.nullable(),
   actionType: ActionTypeSchema,
   customLabel: z.string().nullable(),

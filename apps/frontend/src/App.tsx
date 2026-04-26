@@ -7,6 +7,7 @@ import { RequireAuth } from './features/auth/RequireAuth';
 import { PlantsPage } from './features/plants/PlantsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { ZonesPage } from './features/zones/ZonesPage';
+import { CalendarPage } from './routes/Calendar';
 import { Home } from './routes/Home';
 import { PlantPage } from './routes/PlantPage';
 
@@ -35,6 +36,14 @@ const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <PlantsPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: '/calendar',
+        element: (
+          <RequireAuth>
+            <CalendarPage />
           </RequireAuth>
         ),
       },
