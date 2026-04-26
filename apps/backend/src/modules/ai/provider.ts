@@ -21,6 +21,7 @@ export interface CarePlanProviderInput {
   commonName: string;
   species: string | null;
   notes: string | null;
+  gardenContext: string | null;
 }
 
 export interface RefineCarePlanProviderInput extends CarePlanProviderInput {
@@ -32,6 +33,7 @@ export interface PlantDescriptionProviderInput {
   commonName: string;
   species: string | null;
   notes: string | null;
+  gardenContext: string | null;
 }
 
 export interface PlantIconProviderInput {

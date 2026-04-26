@@ -31,6 +31,9 @@ export function Layout() {
               <SidebarLink to="/plants" icon={<PlantsIcon />}>
                 Plants
               </SidebarLink>
+              <SidebarLink to="/settings" icon={<SettingsIcon />}>
+                Settings
+              </SidebarLink>
             </nav>
             <div className="mt-auto flex flex-col gap-3 border-t border-hairline pt-4">
               <p className="px-2 text-sm font-medium text-ink">{me.data?.displayName}</p>
@@ -74,6 +77,7 @@ export function Layout() {
           <BottomLink to="/" icon={<HomeIcon />} label="Home" />
           <BottomLink to="/zones" icon={<ZonesIcon />} label="Zones" />
           <BottomLink to="/plants" icon={<PlantsIcon />} label="Plants" />
+          <BottomLink to="/settings" icon={<SettingsIcon />} label="Settings" />
         </nav>
       )}
     </div>
@@ -192,6 +196,20 @@ function PlantsIcon() {
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M12 3v2.5M12 18.5V21M21 12h-2.5M5.5 12H3M18.36 5.64l-1.77 1.77M7.41 16.59l-1.77 1.77M18.36 18.36l-1.77-1.77M7.41 7.41 5.64 5.64"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
       />
     </svg>
   );

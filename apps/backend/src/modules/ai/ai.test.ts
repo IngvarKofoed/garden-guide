@@ -179,6 +179,33 @@ describe('ai routes', () => {
     expect(calls.carePlan[0]).toMatchObject({
       commonName: 'Lavender',
       species: 'Lavandula angustifolia',
+      gardenContext: null,
+    });
+  });
+
+  it('POST /api/v1/ai/care-plan forwards garden context when set', async () => {
+    const canned: CarePlanResponse = { tasks: [] };
+    const { provider, calls } = buildFakeProvider({ carePlan: canned });
+    t = await buildTestApp({ llm: provider });
+    cookie = await registerUser(t);
+    const plantId = await createPlant(t, cookie);
+
+    await t.app.inject({
+      method: 'PUT',
+      url: '/api/v1/settings/garden-context',
+      headers: { cookie },
+      payload: { context: 'Denmark, USDA zone 7, maritime climate.' },
+    });
+
+    const res = await t.app.inject({
+      method: 'POST',
+      url: '/api/v1/ai/care-plan',
+      headers: { cookie },
+      payload: { plantId },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(calls.carePlan[0]).toMatchObject({
+      gardenContext: 'Denmark, USDA zone 7, maritime climate.',
     });
   });
 

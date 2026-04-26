@@ -13,6 +13,7 @@ import { registerCalendarRoutes } from './modules/calendar/routes.js';
 import { registerInviteRoutes } from './modules/invites/routes.js';
 import { registerPhotoRoutes } from './modules/photos/routes.js';
 import { registerPlantRoutes } from './modules/plants/routes.js';
+import { registerSettingsRoutes } from './modules/settings/routes.js';
 import { registerTaskRoutes } from './modules/tasks/routes.js';
 import { registerZoneRoutes } from './modules/zones/routes.js';
 
@@ -94,6 +95,7 @@ export async function buildServer(deps: AppDeps) {
   await registerTaskRoutes(app);
   await registerCalendarRoutes(app);
   await registerPhotoRoutes(app);
+  await registerSettingsRoutes(app);
   await registerAiRoutes(app);
 
   return app;

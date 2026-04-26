@@ -4,6 +4,8 @@ import {
   type CarePlanResponse,
   type CareTask,
   type CareTaskCreateRequest,
+  type GardenContext,
+  type GardenContextUpdateRequest,
   type Health,
   type IdentifyPlantRequest,
   type IdentifyPlantResponse,
@@ -34,7 +36,7 @@ export class ApiRequestError extends Error {
 }
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
 }
 
@@ -275,4 +277,19 @@ export function acceptPlantIconDraft(plantId: string): Promise<Plant> {
 
 export function deletePlantIconDraft(plantId: string): Promise<Plant> {
   return request<Plant>(`/api/v1/plants/${plantId}/icon/draft`, { method: 'DELETE' });
+}
+
+// --- Settings ---
+
+export function getGardenContext(): Promise<GardenContext> {
+  return request<GardenContext>('/api/v1/settings/garden-context');
+}
+
+export function updateGardenContext(
+  body: GardenContextUpdateRequest,
+): Promise<GardenContext> {
+  return request<GardenContext>('/api/v1/settings/garden-context', {
+    method: 'PUT',
+    body,
+  });
 }

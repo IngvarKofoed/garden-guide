@@ -10,7 +10,11 @@ export const plantDescriptionSystemPrompt = [
 ].join(' ');
 
 export function plantDescriptionUserPrompt(input: PlantDescriptionProviderInput): string {
-  const lines: string[] = [`Common name: ${input.commonName}`];
+  const lines: string[] = [];
+  if (input.gardenContext) {
+    lines.push(`Garden context (applies to every plant in this garden): ${input.gardenContext}`);
+  }
+  lines.push(`Common name: ${input.commonName}`);
   if (input.species) lines.push(`Species: ${input.species}`);
   if (input.notes) lines.push(`Gardener's notes: ${input.notes}`);
   return lines.join('\n');

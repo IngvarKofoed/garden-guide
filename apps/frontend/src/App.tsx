@@ -5,6 +5,7 @@ import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { RequireAuth } from './features/auth/RequireAuth';
 import { PlantsPage } from './features/plants/PlantsPage';
+import { SettingsPage } from './features/settings/SettingsPage';
 import { ZonesPage } from './features/zones/ZonesPage';
 import { Home } from './routes/Home';
 import { PlantPage } from './routes/PlantPage';
@@ -42,6 +43,14 @@ const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <PlantPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: '/settings',
+        element: (
+          <RequireAuth>
+            <SettingsPage />
           </RequireAuth>
         ),
       },

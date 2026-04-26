@@ -16,6 +16,7 @@ import type { Config } from '../../config.js';
 import type { Db } from '../../db/client.js';
 import { plantPhotos, plants } from '../../db/schema.js';
 import { NotFoundError } from '../../lib/errors.js';
+import { getGardenContext } from '../settings/service.js';
 import { listTasksForPlant } from '../tasks/service.js';
 import type { LLMProvider } from './provider.js';
 
@@ -41,10 +42,12 @@ export async function generateCarePlan(
   body: CarePlanRequest,
 ): Promise<CarePlanResponse> {
   const plant = await loadPlant(deps.db, body.plantId);
+  const gardenContext = await loadGardenContext(deps.db);
   return deps.llm.generateCarePlan({
     commonName: plant.name,
     species: plant.species ?? null,
     notes: plant.notes ?? null,
+    gardenContext,
   });
 }
 
@@ -53,10 +56,12 @@ export async function describePlant(
   body: PlantDescriptionRequest,
 ): Promise<PlantDescriptionResponse> {
   const plant = await loadPlant(deps.db, body.plantId);
+  const gardenContext = await loadGardenContext(deps.db);
   return deps.llm.describePlant({
     commonName: plant.name,
     species: plant.species ?? null,
     notes: plant.notes ?? null,
+    gardenContext,
   });
 }
 
@@ -65,6 +70,7 @@ export async function refineCarePlan(
   body: RefineCarePlanRequest,
 ): Promise<RefineCarePlanResponse> {
   const plant = await loadPlant(deps.db, body.plantId);
+  const gardenContext = await loadGardenContext(deps.db);
   const existing = await listTasksForPlant(deps.db, body.plantId);
   const currentTasks: SuggestedTask[] = existing.map((t) =>
     t.kind === 'recurring'
@@ -88,9 +94,15 @@ export async function refineCarePlan(
     commonName: plant.name,
     species: plant.species ?? null,
     notes: plant.notes ?? null,
+    gardenContext,
     currentTasks,
     question: body.question,
   });
+}
+
+async function loadGardenContext(db: Db): Promise<string | null> {
+  const value = await getGardenContext(db);
+  return value.length === 0 ? null : value;
 }
 
 async function loadPlant(db: Db, plantId: string) {
