@@ -1,4 +1,5 @@
 export * from './dates.js';
+export * from './slots.js';
 export * from './zone.js';
 export * from './plant.js';
 export * from './task.js';

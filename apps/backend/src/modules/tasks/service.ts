@@ -23,26 +23,26 @@ function toCareTask(row: typeof careTasks.$inferSelect): CareTask {
     createdAt: row.createdAt,
   };
   if (row.kind === 'recurring') {
-    if (!row.recurStartMd || !row.recurEndMd) {
+    if (!row.recurStartSlot || !row.recurEndSlot) {
       throw new Error(`Invalid recurring task ${row.id}: missing recur fields`);
     }
     return {
       ...base,
       kind: 'recurring',
-      recurStartMd: row.recurStartMd,
-      recurEndMd: row.recurEndMd,
-      dueDate: null,
+      recurStartSlot: row.recurStartSlot,
+      recurEndSlot: row.recurEndSlot,
+      dueSlot: null,
     };
   }
-  if (!row.dueDate) {
-    throw new Error(`Invalid one-off task ${row.id}: missing due_date`);
+  if (!row.dueSlot) {
+    throw new Error(`Invalid one-off task ${row.id}: missing due_slot`);
   }
   return {
     ...base,
     kind: 'one_off',
-    recurStartMd: null,
-    recurEndMd: null,
-    dueDate: row.dueDate,
+    recurStartSlot: null,
+    recurEndSlot: null,
+    dueSlot: row.dueSlot,
   };
 }
 
@@ -83,9 +83,9 @@ export async function createTask(
       actionType: input.actionType,
       customLabel: input.customLabel ?? null,
       kind: 'recurring',
-      recurStartMd: input.recurStartMd,
-      recurEndMd: input.recurEndMd,
-      dueDate: null,
+      recurStartSlot: input.recurStartSlot,
+      recurEndSlot: input.recurEndSlot,
+      dueSlot: null,
       notes: input.notes ?? null,
       notify: input.notify,
       source: 'manual',
@@ -99,9 +99,9 @@ export async function createTask(
       actionType: input.actionType,
       customLabel: input.customLabel ?? null,
       kind: 'one_off',
-      recurStartMd: null,
-      recurEndMd: null,
-      dueDate: input.dueDate,
+      recurStartSlot: null,
+      recurEndSlot: null,
+      dueSlot: input.dueSlot,
       notes: input.notes ?? null,
       notify: input.notify,
       source: 'manual',
@@ -133,14 +133,14 @@ export async function updateTask(
   if (input.notify !== undefined) patch.notify = input.notify;
 
   if (existing.kind === 'recurring') {
-    if (input.recurStartMd !== undefined) patch.recurStartMd = input.recurStartMd;
-    if (input.recurEndMd !== undefined) patch.recurEndMd = input.recurEndMd;
-    if (input.dueDate !== undefined) {
-      throw new ValidationError('Cannot set due_date on a recurring task');
+    if (input.recurStartSlot !== undefined) patch.recurStartSlot = input.recurStartSlot;
+    if (input.recurEndSlot !== undefined) patch.recurEndSlot = input.recurEndSlot;
+    if (input.dueSlot !== undefined) {
+      throw new ValidationError('Cannot set due_slot on a recurring task');
     }
   } else {
-    if (input.dueDate !== undefined) patch.dueDate = input.dueDate;
-    if (input.recurStartMd !== undefined || input.recurEndMd !== undefined) {
+    if (input.dueSlot !== undefined) patch.dueSlot = input.dueSlot;
+    if (input.recurStartSlot !== undefined || input.recurEndSlot !== undefined) {
       throw new ValidationError('Cannot set recur fields on a one-off task');
     }
   }

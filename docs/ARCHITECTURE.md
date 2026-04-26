@@ -207,10 +207,10 @@ care_tasks (
   custom_label    text,                    // when action_type = 'custom'
   kind            text not null,           // 'recurring' | 'one_off'
   // recurring fields (month-day, year-agnostic)
-  recur_start_md  text,                    // 'MM-DD'
-  recur_end_md    text,                    // 'MM-DD'
+  recur_start_slot text,                   // 'MM-S' — S=1 early / 2 mid / 3 late
+  recur_end_slot   text,                   // 'MM-S'
   // one-off fields
-  due_date        text,                    // 'YYYY-MM-DD'
+  due_slot        text,                    // 'YYYY-MM-S' — slot in a specific year
   notes           text,
   notify          integer not null default 1,
   source          text not null,           // 'manual' | 'ai'
@@ -271,7 +271,7 @@ settings (
 
 ### Notes
 
-- **Recurring tasks store month-day strings**, not full dates, so they apply to every year automatically. This avoids the "regenerate every January" trickery.
+- **All care-task scheduling uses coarse slots, not specific calendar days.** Recurring tasks store year-agnostic `MM-S` slots (S = 1 early / 2 mid / 3 late) so they apply to every year automatically; one-off tasks store a `YYYY-MM-S` slot anchored to a specific year. The calendar service maps each slot to a concrete day range when expanding into the requested window (early = 1–10, mid = 11–20, late = 21–end-of-month).
 - **Journal action types share a vocabulary with care tasks** (the `ActionType` union above).
 - **Soft delete on plants** (`archived_at`) instead of cascading delete; journal history stays meaningful.
 - **`notification_log`** prevents firing the same recurring notification twice in one year (idempotency).
@@ -376,7 +376,7 @@ Claude (Anthropic API) handles three scoped tasks. Every call is pure: the model
 | Use case | Model input | Output |
 |---|---|---|
 | Plant identification | photo bytes (vision) and/or partial name + hardiness zone | ranked list of `{ commonName, species, confidence, notes }` |
-| Care plan generation | confirmed species + hardiness zone | list of `{ actionType, kind, recurStartMd?, recurEndMd?, dueDate?, rationale }` |
+| Care plan generation | confirmed species + hardiness zone | list of `{ actionType, kind, recurStartSlot?, recurEndSlot?, dueSlot?, rationale }` |
 | Care plan refinement | existing tasks + user's question | updated tasks + short explanation |
 
 Implementation notes:
@@ -389,7 +389,7 @@ Implementation notes:
 ## Notifications
 
 - **Transport**: Web Push with VAPID. Each user subscribes once per browser; the subscription is stored in `push_subscriptions`.
-- **Trigger**: an in-process scheduler runs hourly. For each recurring care task whose `recur_start_md` falls within the next 24h *and* has no row in `notification_log` for the current year, fire a notification to every user with `notify = 1` on that task and at least one push subscription. One-off tasks fire 24h before `due_date`.
+- **Trigger**: an in-process scheduler runs hourly. For each recurring care task whose `recur_start_slot` window opens within the next 24h *and* has no row in `notification_log` for the current year, fire a notification to every user with `notify = 1` on that task and at least one push subscription. One-off tasks fire 24h before the start of their `due_slot` window.
 - **Idempotency**: `notification_log` rows are inserted in the same transaction as the send.
 - **No email in v1.** Web Push covers the household case. Email can be added later as a second `push_subscriptions`-shaped channel.
 

@@ -1,10 +1,5 @@
 import { z } from 'zod';
 
-export const MonthDaySchema = z
-  .string()
-  .regex(/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, 'expected MM-DD');
-export type MonthDay = z.infer<typeof MonthDaySchema>;
-
 export const IsoDateSchema = z
   .string()
   .regex(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, 'expected YYYY-MM-DD');

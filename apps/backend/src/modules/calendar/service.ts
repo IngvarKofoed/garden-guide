@@ -1,5 +1,13 @@
 import { and, between, eq, gte, inArray, isNull, lte } from 'drizzle-orm';
-import type { CalendarOccurrence } from '@garden-guide/shared';
+import {
+  MonthSlotSchema,
+  slotIndex,
+  slotToDayRange,
+  YearSlotSchema,
+  yearSlotToDayRange,
+  type CalendarOccurrence,
+  type MonthSlot,
+} from '@garden-guide/shared';
 import type { Db } from '../../db/client.js';
 import { careTasks, plants, taskCompletions } from '../../db/schema.js';
 import { ValidationError } from '../../lib/errors.js';
@@ -17,9 +25,9 @@ interface TaskRow {
   actionType: string;
   customLabel: string | null;
   kind: string;
-  recurStartMd: string | null;
-  recurEndMd: string | null;
-  dueDate: string | null;
+  recurStartSlot: string | null;
+  recurEndSlot: string | null;
+  dueSlot: string | null;
   notes: string | null;
 }
 
@@ -33,40 +41,42 @@ function parseYmd(s: string): Date {
 }
 
 /**
- * For a recurring task with start/end MM-DD and a [from, to] window, return
- * every dated occurrence whose [start, end] intersects the window. Wraps
- * across the year boundary when end_md < start_md (e.g. mulch Nov–Feb).
+ * For a recurring task with start/end MM-S slots and a [from, to] window,
+ * return every dated occurrence whose [start, end] intersects the window.
+ * Wraps across the year boundary when the end slot is earlier in the year
+ * than the start slot (e.g. mulch late-Nov → late-Feb).
  */
 export function expandRecurringWindow(
-  recurStartMd: string,
-  recurEndMd: string,
+  recurStartSlot: string,
+  recurEndSlot: string,
   fromYmd: string,
   toYmd: string,
 ): Array<{ year: number; startDate: string; endDate: string }> {
+  const startSlot: MonthSlot = MonthSlotSchema.parse(recurStartSlot);
+  const endSlot: MonthSlot = MonthSlotSchema.parse(recurEndSlot);
   const from = parseYmd(fromYmd);
   const to = parseYmd(toYmd);
   if (to.getTime() < from.getTime()) {
     throw new ValidationError('`to` must be on or after `from`');
   }
-  const startMonth = Number(recurStartMd.slice(0, 2));
-  const startDay = Number(recurStartMd.slice(3, 5));
-  const endMonth = Number(recurEndMd.slice(0, 2));
-  const endDay = Number(recurEndMd.slice(3, 5));
+  const wraps = slotIndex(endSlot) < slotIndex(startSlot);
 
   const out: Array<{ year: number; startDate: string; endDate: string }> = [];
 
   // We may need the year before `from` as well, because a window starting in
-  // Y-1 (e.g. Nov 15) and ending in Y (e.g. Feb 28) could intersect [from, to].
+  // Y-1 (e.g. late November) and ending in Y (e.g. late February) could
+  // intersect [from, to].
   const startYear = from.getUTCFullYear() - 1;
   const endYear = to.getUTCFullYear() + 1;
 
   for (let year = startYear; year <= endYear; year++) {
-    const occStart = new Date(Date.UTC(year, startMonth - 1, startDay));
-    const wraps =
-      endMonth < startMonth || (endMonth === startMonth && endDay < startDay);
-    const occEnd = wraps
-      ? new Date(Date.UTC(year + 1, endMonth - 1, endDay))
-      : new Date(Date.UTC(year, endMonth - 1, endDay));
+    const sRange = slotToDayRange(startSlot, year);
+    const occStart = new Date(Date.UTC(year, sRange.month - 1, sRange.startDay));
+    const endYearForSlot = wraps ? year + 1 : year;
+    const eRange = slotToDayRange(endSlot, endYearForSlot);
+    const occEnd = new Date(
+      Date.UTC(endYearForSlot, eRange.month - 1, eRange.endDay),
+    );
 
     // Intersect [occStart, occEnd] with [from, to].
     if (occEnd.getTime() < from.getTime()) continue;
@@ -96,9 +106,9 @@ export async function getCalendar(
       actionType: careTasks.actionType,
       customLabel: careTasks.customLabel,
       kind: careTasks.kind,
-      recurStartMd: careTasks.recurStartMd,
-      recurEndMd: careTasks.recurEndMd,
-      dueDate: careTasks.dueDate,
+      recurStartSlot: careTasks.recurStartSlot,
+      recurEndSlot: careTasks.recurEndSlot,
+      dueSlot: careTasks.dueSlot,
       notes: careTasks.notes,
       plantName: plants.name,
       plantSpecies: plants.species,
@@ -136,10 +146,10 @@ export async function getCalendar(
   const occurrences: CalendarOccurrence[] = [];
 
   for (const r of rows) {
-    if (r.kind === 'recurring' && r.recurStartMd && r.recurEndMd) {
+    if (r.kind === 'recurring' && r.recurStartSlot && r.recurEndSlot) {
       for (const win of expandRecurringWindow(
-        r.recurStartMd,
-        r.recurEndMd,
+        r.recurStartSlot,
+        r.recurEndSlot,
         fromYmd,
         toYmd,
       )) {
@@ -164,10 +174,21 @@ export async function getCalendar(
           completedOn: completed,
         });
       }
-    } else if (r.kind === 'one_off' && r.dueDate) {
-      if (r.dueDate < fromYmd || r.dueDate > toYmd) continue;
-      const completed =
-        completionsByTask.get(r.id)?.[0]?.completedOn ?? null;
+    } else if (r.kind === 'one_off' && r.dueSlot) {
+      const dueSlot = YearSlotSchema.parse(r.dueSlot);
+      const range = yearSlotToDayRange(dueSlot);
+      const startDate = ymd(
+        new Date(Date.UTC(range.year, range.month - 1, range.startDay)),
+      );
+      const endDate = ymd(
+        new Date(Date.UTC(range.year, range.month - 1, range.endDay)),
+      );
+      if (endDate < fromYmd || startDate > toYmd) continue;
+      const completed = findCompletionInRange(
+        completionsByTask.get(r.id) ?? [],
+        startDate,
+        endDate,
+      );
       occurrences.push({
         kind: 'one_off',
         taskId: r.id,
@@ -178,18 +199,16 @@ export async function getCalendar(
         actionType: r.actionType as CalendarOccurrence['actionType'],
         customLabel: r.customLabel ?? null,
         notes: r.notes ?? null,
-        dueDate: r.dueDate,
+        dueSlot,
+        startDate,
+        endDate,
         completedOn: completed,
       });
     }
   }
 
-  occurrences.sort((a, b) => primaryDate(a).localeCompare(primaryDate(b)));
+  occurrences.sort((a, b) => a.startDate.localeCompare(b.startDate));
   return occurrences;
-}
-
-function primaryDate(o: CalendarOccurrence): string {
-  return o.kind === 'recurring' ? o.startDate : o.dueDate;
 }
 
 function findCompletionInRange(

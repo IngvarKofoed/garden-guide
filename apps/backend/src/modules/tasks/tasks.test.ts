@@ -50,15 +50,15 @@ describe('care tasks', () => {
       payload: {
         kind: 'recurring',
         actionType: 'prune',
-        recurStartMd: '02-20',
-        recurEndMd: '03-15',
+        recurStartSlot: '02-3',
+        recurEndSlot: '03-2',
         notify: true,
       },
     });
     expect(create.statusCode).toBe(201);
-    const task = create.json() as { id: string; kind: string; recurStartMd: string };
+    const task = create.json() as { id: string; kind: string; recurStartSlot: string };
     expect(task.kind).toBe('recurring');
-    expect(task.recurStartMd).toBe('02-20');
+    expect(task.recurStartSlot).toBe('02-3');
 
     const list = await t.app.inject({
       method: 'GET',
@@ -76,7 +76,7 @@ describe('care tasks', () => {
       payload: {
         kind: 'one_off',
         actionType: 'plant',
-        dueDate: '2026-05-10',
+        dueSlot: '2026-05-1',
         notify: false,
       },
     });
@@ -85,7 +85,7 @@ describe('care tasks', () => {
       method: 'PATCH',
       url: `/api/v1/tasks/${taskId}`,
       headers: { cookie },
-      payload: { recurStartMd: '03-01' },
+      payload: { recurStartSlot: '03-1' },
     });
     expect(bad.statusCode).toBe(400);
     expect(bad.json()).toMatchObject({ error: { code: 'VALIDATION_ERROR' } });
@@ -99,8 +99,8 @@ describe('care tasks', () => {
       payload: {
         kind: 'recurring',
         actionType: 'fertilize',
-        recurStartMd: '04-01',
-        recurEndMd: '04-15',
+        recurStartSlot: '04-1',
+        recurEndSlot: '04-2',
         notify: true,
       },
     });
@@ -136,7 +136,7 @@ describe('care tasks', () => {
       payload: {
         kind: 'one_off',
         actionType: 'water',
-        dueDate: '2026-04-10',
+        dueSlot: '2026-04-1',
         notify: true,
       },
     });

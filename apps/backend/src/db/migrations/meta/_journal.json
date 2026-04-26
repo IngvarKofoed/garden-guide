@@ -8,6 +8,20 @@
       "when": 1777148022419,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777194000000,
+      "tag": "0002_recurring_slots",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1777202000000,
+      "tag": "0006_one_off_year_slot",
+      "breakpoints": true
     }
   ]
 }

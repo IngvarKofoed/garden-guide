@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { IsoDateSchema, IsoTimestampSchema, MonthDaySchema, UlidSchema } from './dates.js';
+import { IsoDateSchema, IsoTimestampSchema, UlidSchema } from './dates.js';
+import { MonthSlotSchema, YearSlotSchema } from './slots.js';
 
 export const ActionTypeSchema = z.enum([
   'prune',
@@ -36,16 +37,16 @@ const BaseCareTaskSchema = z.object({
 
 export const RecurringCareTaskSchema = BaseCareTaskSchema.extend({
   kind: z.literal('recurring'),
-  recurStartMd: MonthDaySchema,
-  recurEndMd: MonthDaySchema,
-  dueDate: z.null(),
+  recurStartSlot: MonthSlotSchema,
+  recurEndSlot: MonthSlotSchema,
+  dueSlot: z.null(),
 });
 
 export const OneOffCareTaskSchema = BaseCareTaskSchema.extend({
   kind: z.literal('one_off'),
-  recurStartMd: z.null(),
-  recurEndMd: z.null(),
-  dueDate: IsoDateSchema,
+  recurStartSlot: z.null(),
+  recurEndSlot: z.null(),
+  dueSlot: YearSlotSchema,
 });
 
 export const CareTaskSchema = z.discriminatedUnion('kind', [
@@ -66,8 +67,8 @@ const RecurringCreateBase = z.object({
   kind: z.literal('recurring'),
   actionType: ActionTypeSchema,
   customLabel: z.string().min(1).max(120).nullish(),
-  recurStartMd: MonthDaySchema,
-  recurEndMd: MonthDaySchema,
+  recurStartSlot: MonthSlotSchema,
+  recurEndSlot: MonthSlotSchema,
   notes: z.string().max(10_000).nullish(),
   notify: z.boolean().default(true),
 });
@@ -76,7 +77,7 @@ const OneOffCreateBase = z.object({
   kind: z.literal('one_off'),
   actionType: ActionTypeSchema,
   customLabel: z.string().min(1).max(120).nullish(),
-  dueDate: IsoDateSchema,
+  dueSlot: YearSlotSchema,
   notes: z.string().max(10_000).nullish(),
   notify: z.boolean().default(true),
 });
@@ -90,9 +91,9 @@ export type CareTaskCreateRequest = z.infer<typeof CareTaskCreateRequestSchema>;
 export const CareTaskUpdateRequestSchema = z.object({
   actionType: ActionTypeSchema.optional(),
   customLabel: z.string().min(1).max(120).nullish(),
-  recurStartMd: MonthDaySchema.optional(),
-  recurEndMd: MonthDaySchema.optional(),
-  dueDate: IsoDateSchema.optional(),
+  recurStartSlot: MonthSlotSchema.optional(),
+  recurEndSlot: MonthSlotSchema.optional(),
+  dueSlot: YearSlotSchema.optional(),
   notes: z.string().max(10_000).nullish(),
   notify: z.boolean().optional(),
 });
@@ -130,7 +131,9 @@ export const RecurringOccurrenceSchema = CalendarOccurrenceBase.extend({
 
 export const OneOffOccurrenceSchema = CalendarOccurrenceBase.extend({
   kind: z.literal('one_off'),
-  dueDate: IsoDateSchema,
+  dueSlot: YearSlotSchema,
+  startDate: IsoDateSchema,
+  endDate: IsoDateSchema,
 });
 
 export const CalendarOccurrenceSchema = z.discriminatedUnion('kind', [
