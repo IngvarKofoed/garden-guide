@@ -2,6 +2,8 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { loadConfig } from './config.js';
 import { createDb } from './db/client.js';
+import { runMigrations } from './db/run-migrations.js';
+import { runBootstrap } from './modules/auth/bootstrap.js';
 import { buildServer } from './server.js';
 
 async function main() {
@@ -11,6 +13,9 @@ async function main() {
   mkdirSync(config.PHOTO_DIR, { recursive: true });
 
   const db = createDb(config.DATABASE_PATH);
+  runMigrations(db);
+  await runBootstrap(db, config.PUBLIC_URL);
+
   const app = await buildServer({ config, db });
 
   try {

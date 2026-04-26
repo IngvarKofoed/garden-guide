@@ -18,6 +18,19 @@ export const InviteSchema = z.object({
 });
 export type Invite = z.infer<typeof InviteSchema>;
 
+export const InviteCreateRequestSchema = z.object({
+  email: z.string().email().nullish(),
+  expiresInHours: z.number().int().positive().max(720).default(168),
+});
+export type InviteCreateRequest = z.infer<typeof InviteCreateRequestSchema>;
+
+export const InviteCreateResponseSchema = z.object({
+  token: z.string(),
+  url: z.string().url(),
+  expiresAt: IsoTimestampSchema,
+});
+export type InviteCreateResponse = z.infer<typeof InviteCreateResponseSchema>;
+
 export const RegisterRequestSchema = z.object({
   inviteToken: z.string().min(16),
   email: z.string().email(),

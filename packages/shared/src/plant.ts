@@ -22,3 +22,24 @@ export const PlantPhotoSchema = z.object({
   createdAt: IsoTimestampSchema,
 });
 export type PlantPhoto = z.infer<typeof PlantPhotoSchema>;
+
+export const PlantCreateRequestSchema = z.object({
+  name: z.string().min(1).max(120),
+  species: z.string().max(160).nullish(),
+  zoneId: UlidSchema.nullish(),
+  notes: z.string().max(10_000).nullish(),
+  hardinessZone: z.string().max(16).nullish(),
+});
+export type PlantCreateRequest = z.infer<typeof PlantCreateRequestSchema>;
+
+export const PlantUpdateRequestSchema = PlantCreateRequestSchema.partial();
+export type PlantUpdateRequest = z.infer<typeof PlantUpdateRequestSchema>;
+
+export const PlantListQuerySchema = z.object({
+  zoneId: UlidSchema.nullish(),
+  q: z.string().max(120).nullish(),
+  archived: z
+    .union([z.literal('true'), z.literal('false'), z.literal('only')])
+    .nullish(),
+});
+export type PlantListQuery = z.infer<typeof PlantListQuerySchema>;
