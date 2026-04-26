@@ -6,8 +6,10 @@ import type { Db } from './db/client.js';
 import { attachSession } from './lib/auth-hooks.js';
 import { HttpError } from './lib/errors.js';
 import { registerAuthRoutes } from './modules/auth/routes.js';
+import { registerCalendarRoutes } from './modules/calendar/routes.js';
 import { registerInviteRoutes } from './modules/invites/routes.js';
 import { registerPlantRoutes } from './modules/plants/routes.js';
+import { registerTaskRoutes } from './modules/tasks/routes.js';
 import { registerZoneRoutes } from './modules/zones/routes.js';
 
 export interface AppDeps {
@@ -76,6 +78,8 @@ export async function buildServer(deps: AppDeps) {
   await registerInviteRoutes(app);
   await registerZoneRoutes(app);
   await registerPlantRoutes(app);
+  await registerTaskRoutes(app);
+  await registerCalendarRoutes(app);
 
   return app;
 }

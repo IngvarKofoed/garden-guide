@@ -61,3 +61,80 @@ export const TaskCompletionSchema = z.object({
   createdAt: IsoTimestampSchema,
 });
 export type TaskCompletion = z.infer<typeof TaskCompletionSchema>;
+
+const RecurringCreateBase = z.object({
+  kind: z.literal('recurring'),
+  actionType: ActionTypeSchema,
+  customLabel: z.string().min(1).max(120).nullish(),
+  recurStartMd: MonthDaySchema,
+  recurEndMd: MonthDaySchema,
+  notes: z.string().max(10_000).nullish(),
+  notify: z.boolean().default(true),
+});
+
+const OneOffCreateBase = z.object({
+  kind: z.literal('one_off'),
+  actionType: ActionTypeSchema,
+  customLabel: z.string().min(1).max(120).nullish(),
+  dueDate: IsoDateSchema,
+  notes: z.string().max(10_000).nullish(),
+  notify: z.boolean().default(true),
+});
+
+export const CareTaskCreateRequestSchema = z.discriminatedUnion('kind', [
+  RecurringCreateBase,
+  OneOffCreateBase,
+]);
+export type CareTaskCreateRequest = z.infer<typeof CareTaskCreateRequestSchema>;
+
+export const CareTaskUpdateRequestSchema = z.object({
+  actionType: ActionTypeSchema.optional(),
+  customLabel: z.string().min(1).max(120).nullish(),
+  recurStartMd: MonthDaySchema.optional(),
+  recurEndMd: MonthDaySchema.optional(),
+  dueDate: IsoDateSchema.optional(),
+  notes: z.string().max(10_000).nullish(),
+  notify: z.boolean().optional(),
+});
+export type CareTaskUpdateRequest = z.infer<typeof CareTaskUpdateRequestSchema>;
+
+export const TaskCompleteRequestSchema = z.object({
+  completedOn: IsoDateSchema.optional(),
+});
+export type TaskCompleteRequest = z.infer<typeof TaskCompleteRequestSchema>;
+
+export const CalendarQuerySchema = z.object({
+  from: IsoDateSchema,
+  to: IsoDateSchema,
+});
+export type CalendarQuery = z.infer<typeof CalendarQuerySchema>;
+
+const CalendarOccurrenceBase = z.object({
+  taskId: UlidSchema,
+  plantId: UlidSchema,
+  plantName: z.string(),
+  plantSpecies: z.string().nullable(),
+  zoneId: UlidSchema.nullable(),
+  actionType: ActionTypeSchema,
+  customLabel: z.string().nullable(),
+  notes: z.string().nullable(),
+  completedOn: IsoDateSchema.nullable(),
+});
+
+export const RecurringOccurrenceSchema = CalendarOccurrenceBase.extend({
+  kind: z.literal('recurring'),
+  startDate: IsoDateSchema,
+  endDate: IsoDateSchema,
+  year: z.number().int(),
+});
+
+export const OneOffOccurrenceSchema = CalendarOccurrenceBase.extend({
+  kind: z.literal('one_off'),
+  dueDate: IsoDateSchema,
+});
+
+export const CalendarOccurrenceSchema = z.discriminatedUnion('kind', [
+  RecurringOccurrenceSchema,
+  OneOffOccurrenceSchema,
+]);
+export type CalendarOccurrence = z.infer<typeof CalendarOccurrenceSchema>;
