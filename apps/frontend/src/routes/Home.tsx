@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Card } from '../components/ui';
 import { useMe } from '../lib/auth';
 import { usePlants } from '../features/plants/hooks';
 import { useZones } from '../features/zones/hooks';
@@ -10,50 +9,54 @@ export function Home() {
   const activePlants = usePlants({ archived: 'false' });
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-10">
       <header>
-        <h1 className="text-4xl font-semibold tracking-tight">
+        <p className="text-sm text-muted">Welcome back</p>
+        <h1 className="mt-1 text-4xl font-semibold tracking-tight text-ink md:text-5xl">
           Hello, {me.data?.displayName?.split(' ')[0] ?? 'there'}
         </h1>
-        <p className="mt-2 text-stone-600 dark:text-stone-400">
+        <p className="mt-3 max-w-xl text-base text-muted">
           Your private guide for your garden.
         </p>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Link to="/zones">
-          <StatCard
-            label="Zones"
-            value={zones.data?.length ?? '—'}
-            description="Areas of the garden you've named."
-          />
-        </Link>
-        <Link to="/plants">
-          <StatCard
-            label="Plants"
-            value={activePlants.data?.length ?? '—'}
-            description="Active plants and trees."
-          />
-        </Link>
+        <StatCard
+          to="/zones"
+          label="Zones"
+          value={zones.data?.length ?? '—'}
+          description="Areas of the garden you've named."
+        />
+        <StatCard
+          to="/plants"
+          label="Plants"
+          value={activePlants.data?.length ?? '—'}
+          description="Active plants and trees."
+        />
       </div>
     </div>
   );
 }
 
 function StatCard({
+  to,
   label,
   value,
   description,
 }: {
+  to: string;
   label: string;
   value: number | string;
   description: string;
 }) {
   return (
-    <Card className="p-6 transition-colors hover:bg-stone-50 dark:hover:bg-stone-800/50">
-      <p className="text-xs font-medium uppercase tracking-wide text-stone-500">{label}</p>
-      <p className="mt-2 text-4xl font-semibold tracking-tight">{value}</p>
-      <p className="mt-1 text-sm text-stone-500">{description}</p>
-    </Card>
+    <Link
+      to={to}
+      className="group rounded-3xl bg-ivory p-6 shadow-card transition-colors duration-200 ease-leaf hover:bg-mint"
+    >
+      <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
+      <p className="mt-3 text-5xl font-semibold tracking-tight text-ink">{value}</p>
+      <p className="mt-2 text-sm text-muted">{description}</p>
+    </Link>
   );
 }

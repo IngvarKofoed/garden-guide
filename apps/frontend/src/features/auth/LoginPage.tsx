@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useLogin, useMe } from '../../lib/auth';
 import { ApiRequestError } from '../../lib/api';
-import { Button, Card, Field, Input } from '../../components/ui';
+import { Button, Field, Input } from '../../components/ui';
 
 interface LocationState {
   from?: string;
@@ -45,37 +45,30 @@ export function LoginPage() {
   });
 
   return (
-    <div className="mx-auto flex max-w-md flex-col gap-6">
+    <div className="mx-auto flex max-w-md flex-col gap-8">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-          Welcome back to your Garden Guide.
-        </p>
+        <h1 className="text-3xl font-semibold tracking-tight text-ink md:text-4xl">
+          Sign in
+        </h1>
+        <p className="mt-2 text-sm text-muted">Welcome back to your Garden Guide.</p>
       </header>
-      <Card>
-        <form onSubmit={onSubmit} className="flex flex-col gap-4 p-6" noValidate>
-          <Field label="Email" htmlFor="email" error={errors.email?.message}>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              {...register('email')}
-            />
-          </Field>
-          <Field label="Password" htmlFor="password" error={errors.password?.message}>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              {...register('password')}
-            />
-          </Field>
-          {errors.root && <p className="text-sm text-red-600">{errors.root.message}</p>}
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
-          </Button>
-        </form>
-      </Card>
+      <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
+        <Field label="Email" htmlFor="email" error={errors.email?.message}>
+          <Input id="email" type="email" autoComplete="email" {...register('email')} />
+        </Field>
+        <Field label="Password" htmlFor="password" error={errors.password?.message}>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            {...register('password')}
+          />
+        </Field>
+        {errors.root && <p className="text-sm text-red-700">{errors.root.message}</p>}
+        <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
     </div>
   );
 }

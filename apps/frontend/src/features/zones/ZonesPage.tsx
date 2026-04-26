@@ -11,11 +11,13 @@ export function ZonesPage() {
   const [showCreate, setShowCreate] = useState(false);
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex items-center justify-between">
+    <div className="flex flex-col gap-8">
+      <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Zones</h1>
-          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink md:text-4xl">
+            Zones
+          </h1>
+          <p className="mt-2 text-sm text-muted">
             Areas of your garden — front bed, greenhouse, anywhere you want to group plants.
           </p>
         </div>
@@ -36,12 +38,8 @@ export function ZonesPage() {
         />
       )}
 
-      {zones.isLoading && (
-        <p className="text-sm text-stone-500">Loading zones…</p>
-      )}
-      {zones.isError && (
-        <p className="text-sm text-red-600">Couldn't load zones.</p>
-      )}
+      {zones.isLoading && <p className="text-sm text-muted">Loading zones…</p>}
+      {zones.isError && <p className="text-sm text-red-700">Couldn't load zones.</p>}
       {zones.data && zones.data.length === 0 && (
         <EmptyState
           title="No zones yet"
@@ -50,7 +48,7 @@ export function ZonesPage() {
         />
       )}
       {zones.data && zones.data.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {zones.data.map((zone) => (
             <ZoneCard key={zone.id} zone={zone} onEdit={() => setEditing(zone)} />
           ))}
@@ -63,14 +61,14 @@ export function ZonesPage() {
 function ZoneCard({ zone, onEdit }: { zone: Zone; onEdit: () => void }) {
   const remove = useDeleteZone();
   return (
-    <Card className="flex flex-col gap-3 p-5">
+    <Card className="flex flex-col gap-4 p-6">
       <div>
-        <h2 className="text-lg font-semibold">{zone.name}</h2>
+        <h2 className="text-lg font-semibold text-ink">{zone.name}</h2>
         {zone.description && (
-          <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">{zone.description}</p>
+          <p className="mt-1.5 text-sm text-muted">{zone.description}</p>
         )}
       </div>
-      <div className="mt-auto flex items-center gap-2">
+      <div className="mt-auto flex items-center gap-2 pt-2">
         <Button variant="secondary" size="sm" onClick={onEdit}>
           Edit
         </Button>
@@ -79,7 +77,9 @@ function ZoneCard({ zone, onEdit }: { zone: Zone; onEdit: () => void }) {
           size="sm"
           disabled={remove.isPending}
           onClick={() => {
-            if (confirm(`Delete zone "${zone.name}"? Plants in this zone will become unassigned.`)) {
+            if (
+              confirm(`Delete zone "${zone.name}"? Plants in this zone will become unassigned.`)
+            ) {
               remove.mutate(zone.id);
             }
           }}
@@ -129,15 +129,17 @@ function ZoneForm({
 
   return (
     <Card>
-      <form onSubmit={onSubmit} className="flex flex-col gap-4 p-5" noValidate>
-        <h2 className="text-lg font-semibold">{editing ? 'Edit zone' : 'New zone'}</h2>
+      <form onSubmit={onSubmit} className="flex flex-col gap-5 p-6" noValidate>
+        <h2 className="text-xl font-semibold text-ink">
+          {editing ? 'Edit zone' : 'New zone'}
+        </h2>
         <Field label="Name" htmlFor="name" error={errors.name?.message}>
           <Input id="name" type="text" autoFocus {...register('name')} />
         </Field>
         <Field label="Description" htmlFor="description" error={errors.description?.message}>
           <Textarea id="description" {...register('description')} />
         </Field>
-        {errors.root && <p className="text-sm text-red-600">{errors.root.message}</p>}
+        {errors.root && <p className="text-sm text-red-700">{errors.root.message}</p>}
         <div className="flex items-center justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel

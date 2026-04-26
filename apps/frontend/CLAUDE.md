@@ -34,7 +34,7 @@ src/
 - **No SSR, no Next.js.** SPA only; the backend serves `index.html` for any non-`/api` path.
 - **Responsive — desktop primary, mobile supported.** Design for desktop first, then verify the layout collapses cleanly to a single-column phone view. Use Tailwind `sm`/`md`/`lg` breakpoints. Tap targets ≥ 44px on touch viewports. Smoke-check new screens at `iPhone 13` viewport before declaring done; mobile must work, but the experience is tuned for desktop.
 - **Photo input** uses `<input type="file" accept="image/*" capture="environment">` so mobile users get the camera directly.
-- **Theme**: light + dark, system-default. Calm palette, photo-forward layout (CONCEPT.md).
+- **Theme**: light only. Calm palette, photo-forward layout (CONCEPT.md). Tokens live in `tailwind.config.ts` (`theme.extend.colors` — sage, cream, ivory, ink, forest, leaf, mint, hairline, muted). Visual system: [/docs/STYLE.md](../../docs/STYLE.md).
 
 ## Environment
 

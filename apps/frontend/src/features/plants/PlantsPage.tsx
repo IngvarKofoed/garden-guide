@@ -6,7 +6,16 @@ import {
 } from '@garden-guide/shared';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Button, Card, EmptyState, Field, Input, Select, Textarea } from '../../components/ui';
+import {
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  Input,
+  Select,
+  Tag,
+  Textarea,
+} from '../../components/ui';
 import { useZones } from '../zones/hooks';
 import { useArchivePlant, useCreatePlant, usePlants, useUpdatePlant } from './hooks';
 
@@ -25,37 +34,41 @@ export function PlantsPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Plants</h1>
-          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink md:text-4xl">
+            Plants
+          </h1>
+          <p className="mt-2 text-sm text-muted">
             Every plant and tree in your garden.
           </p>
         </div>
         <Button onClick={() => setShowCreate(true)}>New plant</Button>
       </header>
 
-      <Card>
-        <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
-          <div>
-            <label htmlFor="search" className="text-xs font-medium uppercase tracking-wide text-stone-500">
+      <Card className="p-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="search"
+              className="text-xs font-medium uppercase tracking-wide text-muted"
+            >
               Search
             </label>
             <Input
               id="search"
-              className="mt-1"
               placeholder="Name or species…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div>
-            <label className="text-xs font-medium uppercase tracking-wide text-stone-500">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted">
               Zone
             </label>
             <Select
-              className="mt-1 w-full"
+              className="w-full"
               value={zoneFilter}
               onChange={setZoneFilter}
               options={[
@@ -64,12 +77,12 @@ export function PlantsPage() {
               ]}
             />
           </div>
-          <div>
-            <label className="text-xs font-medium uppercase tracking-wide text-stone-500">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted">
               Show
             </label>
             <Select
-              className="mt-1 w-full"
+              className="w-full"
               value={archivedView}
               onChange={(v) => setArchivedView(v as 'false' | 'only')}
               options={[
@@ -92,8 +105,8 @@ export function PlantsPage() {
         />
       )}
 
-      {plants.isLoading && <p className="text-sm text-stone-500">Loading plants…</p>}
-      {plants.isError && <p className="text-sm text-red-600">Couldn't load plants.</p>}
+      {plants.isLoading && <p className="text-sm text-muted">Loading plants…</p>}
+      {plants.isError && <p className="text-sm text-red-700">Couldn't load plants.</p>}
       {plants.data && plants.data.length === 0 && (
         <EmptyState
           title={archivedView === 'only' ? 'No archived plants' : 'No plants yet'}
@@ -110,7 +123,7 @@ export function PlantsPage() {
         />
       )}
       {plants.data && plants.data.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {plants.data.map((plant) => (
             <PlantCard
               key={plant.id}
@@ -136,22 +149,22 @@ function PlantCard({
 }) {
   const archive = useArchivePlant();
   return (
-    <Card className="flex flex-col gap-3 p-5">
-      <div>
-        <h2 className="text-lg font-semibold">{plant.name}</h2>
-        {plant.species && (
-          <p className="text-sm italic text-stone-500">{plant.species}</p>
-        )}
-        {zoneName && <p className="mt-1 text-xs text-stone-500">in {zoneName}</p>}
+    <Card className="flex flex-col gap-4 p-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">{plant.name}</h2>
+          {plant.species && (
+            <p className="mt-0.5 text-sm italic text-muted">{plant.species}</p>
+          )}
+        </div>
+        {zoneName && <Tag tone="mint">{zoneName}</Tag>}
       </div>
       {plant.notes && (
-        <p className="line-clamp-3 text-sm text-stone-600 dark:text-stone-400">{plant.notes}</p>
+        <p className="line-clamp-3 text-sm text-muted">{plant.notes}</p>
       )}
-      <div className="mt-auto flex items-center gap-2">
+      <div className="mt-auto flex items-center gap-2 pt-2">
         {plant.archivedAt ? (
-          <span className="rounded-full bg-stone-200 px-2.5 py-0.5 text-xs font-medium text-stone-700 dark:bg-stone-800 dark:text-stone-300">
-            Archived
-          </span>
+          <Tag tone="ivory">Archived</Tag>
         ) : (
           <>
             <Button variant="secondary" size="sm" onClick={onEdit}>
@@ -232,15 +245,20 @@ function PlantForm({
 
   return (
     <Card>
-      <form onSubmit={onSubmit} className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2" noValidate>
-        <h2 className="text-lg font-semibold sm:col-span-2">
+      <form onSubmit={onSubmit} className="grid grid-cols-1 gap-5 p-6 sm:grid-cols-2" noValidate>
+        <h2 className="text-xl font-semibold text-ink sm:col-span-2">
           {editing ? 'Edit plant' : 'New plant'}
         </h2>
         <Field label="Name" htmlFor="name" error={errors.name?.message}>
           <Input id="name" type="text" autoFocus {...register('name')} />
         </Field>
         <Field label="Species or cultivar" htmlFor="species" error={errors.species?.message}>
-          <Input id="species" type="text" placeholder="e.g. Malus domestica" {...register('species')} />
+          <Input
+            id="species"
+            type="text"
+            placeholder="e.g. Malus domestica"
+            {...register('species')}
+          />
         </Field>
         <Field label="Zone" htmlFor="zoneId">
           <Select
@@ -260,14 +278,21 @@ function PlantForm({
           error={errors.hardinessZone?.message}
           hint="Override the garden default for microclimates."
         >
-          <Input id="hardinessZone" type="text" placeholder="e.g. 7b" {...register('hardinessZone')} />
-        </Field>
-        <Field label="Notes" htmlFor="notes" error={errors.notes?.message}>
-          <Textarea id="notes" {...register('notes')} />
+          <Input
+            id="hardinessZone"
+            type="text"
+            placeholder="e.g. 7b"
+            {...register('hardinessZone')}
+          />
         </Field>
         <div className="sm:col-span-2">
-          {errors.root && <p className="text-sm text-red-600">{errors.root.message}</p>}
+          <Field label="Notes" htmlFor="notes" error={errors.notes?.message}>
+            <Textarea id="notes" {...register('notes')} />
+          </Field>
         </div>
+        {errors.root && (
+          <p className="text-sm text-red-700 sm:col-span-2">{errors.root.message}</p>
+        )}
         <div className="flex items-center justify-end gap-2 sm:col-span-2">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
