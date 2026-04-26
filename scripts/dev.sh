@@ -37,10 +37,14 @@ export SESSION_SECRET="$(cat "$SECRET_FILE")"
 export VITE_PORT="${VITE_PORT:-5601}"
 export VITE_API_TARGET="${VITE_API_TARGET:-http://localhost:${PORT}}"
 
+# Best-effort LAN IP — useful for opening the app on a phone or tablet on the
+# same Wi-Fi. Empty if no en0/en1 interface or no IPv4 address.
+LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || true)"
+
 cat <<INFO
 Garden Guide dev
   Backend:  http://localhost:${PORT}
-  Frontend: http://localhost:${VITE_PORT}
+  Frontend: http://localhost:${VITE_PORT}$([ -n "$LAN_IP" ] && printf '\n  LAN:      http://%s:%s' "$LAN_IP" "$VITE_PORT")
   Data:     ${DATABASE_PATH}
   Photos:   ${PHOTO_DIR}
 
