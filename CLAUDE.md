@@ -37,7 +37,8 @@ Run from the repo root:
 | Command | Description |
 |---------|-------------|
 | `pnpm install` | Install all workspace dependencies |
-| `pnpm dev` | Backend + frontend dev servers in parallel |
+| `./scripts/dev.sh` | Convenience: backend on `5600`, frontend on `5601`, env baked in. First run also generates `.dev-session-secret` (gitignored) so sessions persist across restarts. |
+| `pnpm dev` | Raw backend + frontend in parallel — assumes you've exported the env yourself. Used by `scripts/dev.sh` and CI. |
 | `pnpm build` | Build backend, frontend, shared |
 | `pnpm test` | Vitest across all packages |
 | `pnpm lint` | ESLint + Prettier across the monorepo |
