@@ -6,8 +6,10 @@ export const PlantSchema = z.object({
   name: z.string().min(1).max(120),
   species: z.string().max(160).nullable(),
   zoneId: UlidSchema.nullable(),
+  description: z.string().nullable(),
   notes: z.string().nullable(),
-  hardinessZone: z.string().max(16).nullable(),
+  iconPhotoId: UlidSchema.nullable(),
+  iconDraftPhotoId: UlidSchema.nullable(),
   archivedAt: IsoTimestampSchema.nullable(),
   createdAt: IsoTimestampSchema,
 });
@@ -27,8 +29,8 @@ export const PlantCreateRequestSchema = z.object({
   name: z.string().min(1).max(120),
   species: z.string().max(160).nullish(),
   zoneId: UlidSchema.nullish(),
+  description: z.string().max(4_000).nullish(),
   notes: z.string().max(10_000).nullish(),
-  hardinessZone: z.string().max(16).nullish(),
 });
 export type PlantCreateRequest = z.infer<typeof PlantCreateRequestSchema>;
 

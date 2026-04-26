@@ -26,12 +26,12 @@ Garden Guide is a self-hosted, single-instance web app. One process serves a JSO
 │        │                     │                               │
 │  ┌─────▼──────┐    ┌─────────▼─────────┐    ┌────────────┐   │
 │  │ SQLite     │    │ Local FS (photos) │    │ LLM client │   │
-│  │ (Drizzle)  │    │                   │    │ (Anthropic)│   │
+│  │ (Drizzle)  │    │                   │    │ (pluggable)│   │
 │  └────────────┘    └───────────────────┘    └─────┬──────┘   │
 └────────────────────────────────────────────────────┼─────────┘
                                                      │
                                           ┌──────────▼──────────┐
-                                          │ Anthropic API       │
+                                          │ OpenAI / Anthropic  │
                                           └─────────────────────┘
 ```
 
@@ -51,7 +51,7 @@ Garden Guide is a self-hosted, single-instance web app. One process serves a JSO
 | Server state | TanStack Query | Cache, optimistic updates, retries. |
 | Forms | React Hook Form + Zod | Same Zod schemas validate on both sides. |
 | Dates | date-fns | Tree-shakeable, no opinionated timezone dance. |
-| LLM client | `@anthropic-ai/sdk` | Claude for plant identification (vision) and care-plan generation. |
+| LLM client | Pluggable provider (OpenAI today, Anthropic via the same interface) | Plant identification (vision) and care-plan generation. Provider chosen at boot via `LLM_PROVIDER`; swapping providers should not touch the service or route layer. |
 | Notifications | Web Push (VAPID) | Browser-native, no third-party service needed. |
 | Auth | Cookie sessions, Argon2id passwords | Boring, self-contained. Invite-only registration. |
 | Validation | Zod | Shared between client and server via the `shared` package. |
@@ -186,7 +186,6 @@ plants (
   species         text,                    // optional species/cultivar
   zone_id         text fk -> zones.id,     // nullable
   notes           text,
-  hardiness_zone  text,                    // microclimate override
   archived_at     text,                    // soft delete
   created_at      text not null
 )
@@ -263,7 +262,7 @@ notification_log (
 )
 
 settings (
-  key             text pk,                 // 'hardiness_zone', 'timezone', …
+  key             text pk,                 // 'timezone', …
   value           text not null,
   updated_at      text not null
 )
@@ -275,7 +274,7 @@ settings (
 - **Journal action types share a vocabulary with care tasks** (the `ActionType` union above).
 - **Soft delete on plants** (`archived_at`) instead of cascading delete; journal history stays meaningful.
 - **`notification_log`** prevents firing the same recurring notification twice in one year (idempotency).
-- **`settings`** is a simple key-value table for instance-wide config like the garden's hardiness zone and default timezone.
+- **`settings`** is a simple key-value table for instance-wide config (default timezone, future garden-level preferences).
 
 ## API shape
 
@@ -371,20 +370,47 @@ The calendar view is the home screen, so it's the only endpoint with non-trivial
 
 ## LLM integration
 
-Claude (Anthropic API) handles three scoped tasks. Every call is pure: the model receives the inputs needed and returns structured JSON validated by Zod. No conversation history, no tools, no agent loop.
+The LLM handles three scoped tasks. Every call is pure: the model receives the inputs needed and returns structured JSON validated by Zod. No conversation history, no tools, no agent loop.
 
 | Use case | Model input | Output |
 |---|---|---|
-| Plant identification | photo bytes (vision) and/or partial name + hardiness zone | ranked list of `{ commonName, species, confidence, notes }` |
-| Care plan generation | confirmed species + hardiness zone | list of `{ actionType, kind, recurStartSlot?, recurEndSlot?, dueSlot?, rationale }` |
+| Plant identification | photo bytes (vision) and/or partial name | ranked list of `{ commonName, species, confidence, notes }` |
+| Care plan generation | confirmed species + free-form gardener notes | list of `{ actionType, kind, recurStartSlot?, recurEndSlot?, dueSlot?, rationale }` |
 | Care plan refinement | existing tasks + user's question | updated tasks + short explanation |
 
-Implementation notes:
+### Provider abstraction
 
-- Prompts live in `apps/backend/src/modules/ai/prompts/` as plain `.ts` files for diffability.
-- Responses use Anthropic tool-use to force JSON-shaped output; the parsed object is then re-validated with Zod.
-- API key in env (`ANTHROPIC_API_KEY`); never sent to the browser.
-- All AI suggestions are persisted only after the user accepts them. The endpoint that *generates* the suggestion does not write to the database.
+The backend never imports a vendor SDK from a route or service. Instead it talks to an `LLMProvider` interface that exposes those three methods, and a factory chooses the concrete implementation at boot.
+
+```
+apps/backend/src/modules/ai/
+  provider.ts                # LLMProvider interface + internal input shapes
+  service.ts                 # validates request, loads DB context, calls provider
+  routes.ts                  # POST /api/v1/ai/identify-plant, /care-plan, /care-plan/refine
+  prompts/                   # provider-neutral system + user prompt builders
+    identify-plant.ts
+    care-plan.ts
+    refine-care-plan.ts
+  providers/
+    index.ts                 # createLLMProvider(config) factory
+    openai.ts                # OpenAI implementation (default)
+    anthropic.ts             # placeholder — throws AI_UPSTREAM_ERROR until implemented
+```
+
+- **Selection** — `LLM_PROVIDER` env var (`openai` | `anthropic`, default `openai`). The factory fails fast at startup if the selected provider's key is missing.
+- **Internal shapes are not wire shapes.** Wire schemas in `@garden-guide/shared/ai.ts` use IDs (`photoId`, `plantId`); the service layer resolves IDs to bytes/rows and calls the provider with internal shapes (`{ commonName, species, notes, … }`). This keeps providers free of database dependencies.
+- **Structured output** — OpenAI uses `response_format: { type: "json_object" }` plus an explicit JSON schema in the prompt; Anthropic (when implemented) would use tool-use to force JSON. Both responses are parsed and re-validated against the same Zod schemas in `@garden-guide/shared`.
+- **Failure mapping** — provider errors and malformed JSON throw `UpstreamError` (HTTP 502, code `AI_UPSTREAM_ERROR`). Vendor stack traces are logged but never returned to the client.
+- **Prompts live in `prompts/`** as plain `.ts` files for diffability and snapshotting. They are provider-neutral; the provider modules wrap them in their SDK-specific request shape.
+- **API keys in env** (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`); never sent to the browser.
+- **All AI suggestions are persisted only after the user accepts them.** The endpoint that *generates* the suggestion does not write to the database.
+
+### Adding a new provider
+
+1. Create `providers/<name>.ts` implementing `LLMProvider`.
+2. Add the name to the `LLM_PROVIDER` enum in `config.ts` and to `createLLMProvider`.
+3. Add a key field to `config.ts` and the `superRefine` cross-field check.
+4. No changes to `service.ts`, `routes.ts`, or the wire schemas.
 
 ## Notifications
 
@@ -441,7 +467,9 @@ services:
       - DATABASE_PATH=/data/garden-guide.db
       - PHOTO_DIR=/data/photos
       - SESSION_SECRET=...
-      - ANTHROPIC_API_KEY=...
+      - LLM_PROVIDER=openai
+      - OPENAI_API_KEY=...
+      # - ANTHROPIC_API_KEY=...    # only when LLM_PROVIDER=anthropic
       - VAPID_PUBLIC_KEY=...
       - VAPID_PRIVATE_KEY=...
       - PUBLIC_URL=https://garden.example.com
@@ -463,7 +491,10 @@ All config via environment variables, parsed and validated with Zod at startup. 
 | `PHOTO_DIR` | Absolute path for photo storage. |
 | `SESSION_SECRET` | HMAC secret for signed cookies. |
 | `PUBLIC_URL` | External URL — used in Web Push, invite links, OG tags. |
-| `ANTHROPIC_API_KEY` | LLM credential. |
+| `LLM_PROVIDER` | `openai` (default) or `anthropic`. |
+| `LLM_MODEL` | Optional model override; defaults per provider (`gpt-4o`, `claude-3-5-sonnet-latest`). |
+| `OPENAI_API_KEY` | Required when `LLM_PROVIDER=openai`. |
+| `ANTHROPIC_API_KEY` | Required when `LLM_PROVIDER=anthropic`. |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Web Push. |
 | `LOG_LEVEL` | `info` by default. |
 | `PORT` | Default `3000`. |

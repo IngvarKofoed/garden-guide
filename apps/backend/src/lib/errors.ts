@@ -51,3 +51,9 @@ export class LoginFailedError extends HttpError {
     super(401, 'LOGIN_FAILED', 'Invalid email or password');
   }
 }
+
+export class UpstreamError extends HttpError {
+  constructor(message: string, details?: unknown) {
+    super(502, 'AI_UPSTREAM_ERROR', message, details);
+  }
+}

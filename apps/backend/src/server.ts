@@ -1,13 +1,17 @@
 import cookie from '@fastify/cookie';
+import multipart from '@fastify/multipart';
 import Fastify from 'fastify';
 import type { FastifyError, FastifyServerOptions } from 'fastify';
 import type { Config } from './config.js';
 import type { Db } from './db/client.js';
 import { attachSession } from './lib/auth-hooks.js';
 import { HttpError } from './lib/errors.js';
+import { registerAiRoutes } from './modules/ai/routes.js';
+import type { LLMProvider } from './modules/ai/provider.js';
 import { registerAuthRoutes } from './modules/auth/routes.js';
 import { registerCalendarRoutes } from './modules/calendar/routes.js';
 import { registerInviteRoutes } from './modules/invites/routes.js';
+import { registerPhotoRoutes } from './modules/photos/routes.js';
 import { registerPlantRoutes } from './modules/plants/routes.js';
 import { registerTaskRoutes } from './modules/tasks/routes.js';
 import { registerZoneRoutes } from './modules/zones/routes.js';
@@ -15,6 +19,7 @@ import { registerZoneRoutes } from './modules/zones/routes.js';
 export interface AppDeps {
   config: Config;
   db: Db;
+  llm: LLMProvider;
 }
 
 function buildLoggerOptions(config: Config): FastifyServerOptions['logger'] {
@@ -39,10 +44,18 @@ export async function buildServer(deps: AppDeps) {
 
   app.decorate('config', deps.config);
   app.decorate('db', deps.db);
+  app.decorate('llm', deps.llm);
 
   await app.register(cookie, {
     secret: deps.config.SESSION_SECRET,
     parseOptions: {},
+  });
+
+  await app.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10 MB
+      files: 1,
+    },
   });
 
   app.addHook('preHandler', attachSession);
@@ -80,6 +93,8 @@ export async function buildServer(deps: AppDeps) {
   await registerPlantRoutes(app);
   await registerTaskRoutes(app);
   await registerCalendarRoutes(app);
+  await registerPhotoRoutes(app);
+  await registerAiRoutes(app);
 
   return app;
 }
@@ -90,5 +105,6 @@ declare module 'fastify' {
   interface FastifyInstance {
     config: Config;
     db: Db;
+    llm: LLMProvider;
   }
 }

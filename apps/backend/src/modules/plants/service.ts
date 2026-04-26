@@ -16,8 +16,10 @@ function toPlant(row: typeof plants.$inferSelect): Plant {
     name: row.name,
     species: row.species ?? null,
     zoneId: row.zoneId ?? null,
+    description: row.description ?? null,
     notes: row.notes ?? null,
-    hardinessZone: row.hardinessZone ?? null,
+    iconPhotoId: row.iconPhotoId ?? null,
+    iconDraftPhotoId: row.iconDraftPhotoId ?? null,
     archivedAt: row.archivedAt ?? null,
     createdAt: row.createdAt,
   };
@@ -70,8 +72,8 @@ export async function createPlant(db: Db, input: PlantCreateRequest): Promise<Pl
     name: input.name,
     species: input.species ?? null,
     zoneId: input.zoneId ?? null,
+    description: input.description ?? null,
     notes: input.notes ?? null,
-    hardinessZone: input.hardinessZone ?? null,
     archivedAt: null,
     createdAt,
   });
@@ -87,8 +89,8 @@ export async function updatePlant(
   if (input.name !== undefined) patch.name = input.name;
   if (input.species !== undefined) patch.species = input.species ?? null;
   if (input.zoneId !== undefined) patch.zoneId = input.zoneId ?? null;
+  if (input.description !== undefined) patch.description = input.description ?? null;
   if (input.notes !== undefined) patch.notes = input.notes ?? null;
-  if (input.hardinessZone !== undefined) patch.hardinessZone = input.hardinessZone ?? null;
 
   if (Object.keys(patch).length > 0) {
     const result = await db.update(plants).set(patch).where(eq(plants.id, id));

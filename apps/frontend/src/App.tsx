@@ -7,6 +7,7 @@ import { RequireAuth } from './features/auth/RequireAuth';
 import { PlantsPage } from './features/plants/PlantsPage';
 import { ZonesPage } from './features/zones/ZonesPage';
 import { Home } from './routes/Home';
+import { PlantPage } from './routes/PlantPage';
 
 const router = createBrowserRouter([
   {
@@ -33,6 +34,14 @@ const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <PlantsPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: '/plants/:id',
+        element: (
+          <RequireAuth>
+            <PlantPage />
           </RequireAuth>
         ),
       },

@@ -3,6 +3,7 @@ import { dirname } from 'node:path';
 import { loadConfig } from './config.js';
 import { createDb } from './db/client.js';
 import { runMigrations } from './db/run-migrations.js';
+import { createLLMProvider } from './modules/ai/providers/index.js';
 import { runBootstrap } from './modules/auth/bootstrap.js';
 import { buildServer } from './server.js';
 
@@ -16,11 +17,15 @@ async function main() {
   runMigrations(db);
   await runBootstrap(db, config.PUBLIC_URL);
 
-  const app = await buildServer({ config, db });
+  const llm = createLLMProvider(config);
+  const app = await buildServer({ config, db, llm });
 
   try {
     await app.listen({ port: config.PORT, host: '0.0.0.0' });
-    app.log.info({ port: config.PORT }, 'garden-guide server listening');
+    app.log.info(
+      { port: config.PORT, llm: llm.info },
+      'garden-guide server listening',
+    );
   } catch (err) {
     app.log.error({ err }, 'failed to start server');
     process.exit(1);

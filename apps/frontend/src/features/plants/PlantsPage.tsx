@@ -6,6 +6,7 @@ import {
 } from '@garden-guide/shared';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -16,6 +17,10 @@ import {
   Tag,
   Textarea,
 } from '../../components/ui';
+import { plantIconUrl } from '../../lib/api';
+import { IconPanel } from '../ai/IconPanel';
+import { IdentifyPanel } from '../ai/IdentifyPanel';
+import { usePlantDescription } from '../ai/hooks';
 import { useZones } from '../zones/hooks';
 import { useArchivePlant, useCreatePlant, usePlants, useUpdatePlant } from './hooks';
 
@@ -150,14 +155,38 @@ function PlantCard({
   const archive = useArchivePlant();
   return (
     <Card className="flex flex-col gap-4 p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-ink">{plant.name}</h2>
-          {plant.species && (
-            <p className="mt-0.5 text-sm italic text-muted">{plant.species}</p>
+      <div className="flex items-start gap-4">
+        <Link
+          to={`/plants/${plant.id}`}
+          className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-cream"
+          aria-hidden={!plant.iconPhotoId}
+          tabIndex={plant.iconPhotoId ? 0 : -1}
+        >
+          {plant.iconPhotoId ? (
+            <img
+              src={plantIconUrl(plant.id, plant.iconPhotoId)}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <CardSeedIcon />
           )}
+        </Link>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-ink">
+                <Link to={`/plants/${plant.id}`} className="hover:underline">
+                  {plant.name}
+                </Link>
+              </h2>
+              {plant.species && (
+                <p className="mt-0.5 text-sm italic text-muted">{plant.species}</p>
+              )}
+            </div>
+            {zoneName && <Tag tone="mint">{zoneName}</Tag>}
+          </div>
         </div>
-        {zoneName && <Tag tone="mint">{zoneName}</Tag>}
       </div>
       {plant.notes && (
         <p className="line-clamp-3 text-sm text-muted">{plant.notes}</p>
@@ -167,6 +196,12 @@ function PlantCard({
           <Tag tone="ivory">Archived</Tag>
         ) : (
           <>
+            <Link
+              to={`/plants/${plant.id}`}
+              className="inline-flex h-9 items-center rounded-full bg-ink px-4 text-sm font-medium text-cream transition-colors hover:bg-ink/90"
+            >
+              Open
+            </Link>
             <Button variant="secondary" size="sm" onClick={onEdit}>
               Edit
             </Button>
@@ -189,6 +224,31 @@ function PlantCard({
   );
 }
 
+function CardSeedIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="h-7 w-7 text-muted/60"
+      aria-hidden="true"
+    >
+      <path d="M12 21v-8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path
+        d="M12 13c-2 0-4-1.5-4-4 2 0 4 1.5 4 4z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 13c0-2.5 1.5-4.5 4.5-4.5 0 3-2 4.5-4.5 4.5z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function PlantForm({
   plant,
   onClose,
@@ -201,7 +261,9 @@ function PlantForm({
   const create = useCreatePlant();
   const update = useUpdatePlant();
   const zones = useZones();
+  const describe = usePlantDescription();
   const editing = !!plant;
+  const [showIdentify, setShowIdentify] = useState(false);
 
   const {
     register,
@@ -216,20 +278,21 @@ function PlantForm({
       name: plant?.name ?? '',
       species: plant?.species ?? '',
       zoneId: plant?.zoneId ?? null,
+      description: plant?.description ?? '',
       notes: plant?.notes ?? '',
-      hardinessZone: plant?.hardinessZone ?? '',
     },
   });
 
   const zoneValue = watch('zoneId') ?? '';
+  const watchedName = watch('name') ?? '';
 
   const onSubmit = handleSubmit(async (values) => {
     try {
       const body: PlantCreateRequest = {
         ...values,
         species: values.species?.trim() || null,
+        description: values.description?.trim() || null,
         notes: values.notes?.trim() || null,
-        hardinessZone: values.hardinessZone?.trim() || null,
         zoneId: values.zoneId || null,
       };
       if (editing && plant) {
@@ -243,12 +306,51 @@ function PlantForm({
     }
   });
 
+  const onGenerateDescription = async () => {
+    if (!plant) return;
+    try {
+      const res = await describe.mutateAsync({ plantId: plant.id });
+      setValue('description', res.description, { shouldDirty: true });
+    } catch (err) {
+      setError('description', { message: (err as Error).message });
+    }
+  };
+
   return (
     <Card>
       <form onSubmit={onSubmit} className="grid grid-cols-1 gap-5 p-6 sm:grid-cols-2" noValidate>
-        <h2 className="text-xl font-semibold text-ink sm:col-span-2">
-          {editing ? 'Edit plant' : 'New plant'}
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
+          <h2 className="text-xl font-semibold text-ink">
+            {editing ? 'Edit plant' : 'New plant'}
+          </h2>
+          {!editing && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowIdentify((v) => !v)}
+            >
+              {showIdentify ? 'Hide AI identify' : 'Identify with AI'}
+            </Button>
+          )}
+        </div>
+        {!editing && showIdentify && (
+          <div className="sm:col-span-2">
+            <IdentifyPanel
+              initialName={watchedName}
+              onPick={({ name, species }) => {
+                setValue('name', name, { shouldDirty: true, shouldValidate: true });
+                setValue('species', species ?? '', { shouldDirty: true });
+                setShowIdentify(false);
+              }}
+            />
+          </div>
+        )}
+        {editing && plant && (
+          <div className="sm:col-span-2">
+            <IconPanel plantId={plant.id} />
+          </div>
+        )}
         <Field label="Name" htmlFor="name" error={errors.name?.message}>
           <Input id="name" type="text" autoFocus {...register('name')} />
         </Field>
@@ -272,19 +374,33 @@ function PlantForm({
             ]}
           />
         </Field>
-        <Field
-          label="Hardiness zone"
-          htmlFor="hardinessZone"
-          error={errors.hardinessZone?.message}
-          hint="Override the garden default for microclimates."
-        >
-          <Input
-            id="hardinessZone"
-            type="text"
-            placeholder="e.g. 7b"
-            {...register('hardinessZone')}
+        <div className="sm:col-span-2">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <label htmlFor="description" className="text-sm font-medium text-ink">
+              Description
+            </label>
+            {editing && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onGenerateDescription}
+                disabled={describe.isPending}
+              >
+                {describe.isPending ? 'Generating…' : 'Generate with AI'}
+              </Button>
+            )}
+          </div>
+          <Textarea
+            id="description"
+            className="min-h-[5rem] w-full"
+            placeholder="A short summary of the plant — what it looks like and where it thrives."
+            {...register('description')}
           />
-        </Field>
+          {errors.description?.message && (
+            <p className="mt-1 text-xs text-red-700">{errors.description.message}</p>
+          )}
+        </div>
         <div className="sm:col-span-2">
           <Field label="Notes" htmlFor="notes" error={errors.notes?.message}>
             <Textarea id="notes" {...register('notes')} />
