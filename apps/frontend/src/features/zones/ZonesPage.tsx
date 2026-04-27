@@ -1,18 +1,35 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { ZoneCreateRequestSchema, type Zone, type ZoneCreateRequest } from '@garden-guide/shared';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Button, Card, EmptyState, Field, Input, Textarea } from '../../components/ui';
-import { useCreateZone, useDeleteZone, useUpdateZone, useZones } from './hooks';
+import { useEffect, useState } from 'react';
+import type { Zone } from '@garden-guide/shared';
+import { Button, Card, EmptyState } from '../../components/ui';
+import { MapEditor } from '../map/MapEditor';
+import { cellsAreEmpty, decodeCells } from '../map/cells';
+import { useMap } from '../map/hooks';
+import { useDeleteZone, useZones } from './hooks';
+import { ZONE_PALETTE } from './palette';
+import { Swatch } from './Swatch';
+import { ZoneForm } from './ZoneForm';
+
+type View = 'map' | 'list';
 
 export function ZonesPage() {
   const zones = useZones();
+  const map = useMap();
   const [editing, setEditing] = useState<Zone | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [view, setView] = useState<View | null>(null);
+
+  // Default the view from server state once: map if any cells are painted, else list.
+  useEffect(() => {
+    if (view !== null || !map.data) return;
+    const cells = decodeCells(map.data.cells, map.data.width * map.data.height);
+    setView(cellsAreEmpty(cells) ? 'list' : 'map');
+  }, [map.data, view]);
+
+  const activeView: View = view ?? 'list';
 
   return (
-    <div className="flex flex-col gap-8">
-      <header className="flex items-center justify-between gap-3">
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-ink md:text-4xl">
             Zones
@@ -21,7 +38,10 @@ export function ZonesPage() {
             Areas of your garden — front bed, greenhouse, anywhere you want to group plants.
           </p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>New zone</Button>
+        <div className="flex items-center gap-3">
+          <ViewToggle value={activeView} onChange={setView} />
+          <Button onClick={() => setShowCreate(true)}>New zone</Button>
+        </div>
       </header>
 
       {showCreate && (
@@ -38,35 +58,111 @@ export function ZonesPage() {
         />
       )}
 
-      {zones.isLoading && <p className="text-sm text-muted">Loading zones…</p>}
-      {zones.isError && <p className="text-sm text-red-700">Couldn't load zones.</p>}
-      {zones.data && zones.data.length === 0 && (
-        <EmptyState
-          title="No zones yet"
-          description="Create your first zone to start organising your garden."
-          action={<Button onClick={() => setShowCreate(true)}>Create a zone</Button>}
+      {activeView === 'map' ? (
+        <MapView mapLoading={map.isLoading} mapData={map.data} onSwitchToList={() => setView('list')} />
+      ) : (
+        <ListView
+          loading={zones.isLoading}
+          error={zones.isError}
+          zones={zones.data ?? []}
+          onEdit={(z) => setEditing(z)}
+          onCreate={() => setShowCreate(true)}
         />
       )}
-      {zones.data && zones.data.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {zones.data.map((zone) => (
-            <ZoneCard key={zone.id} zone={zone} onEdit={() => setEditing(zone)} />
-          ))}
-        </div>
-      )}
+    </div>
+  );
+}
+
+function ViewToggle({ value, onChange }: { value: View; onChange: (v: View) => void }) {
+  const opts: { value: View; label: string }[] = [
+    { value: 'map', label: 'Map' },
+    { value: 'list', label: 'List' },
+  ];
+  return (
+    <div className="inline-flex rounded-full border border-hairline bg-cream p-1">
+      {opts.map((opt) => {
+        const active = opt.value === value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={`rounded-full px-4 py-1.5 text-sm transition ${
+              active ? 'bg-ink text-cream' : 'text-ink hover:bg-ivory'
+            }`}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function MapView({
+  mapLoading,
+  mapData,
+  onSwitchToList,
+}: {
+  mapLoading: boolean;
+  mapData: ReturnType<typeof useMap>['data'];
+  onSwitchToList: () => void;
+}) {
+  if (mapLoading || !mapData) {
+    return <p className="text-sm text-muted">Loading map…</p>;
+  }
+  return <MapEditor map={mapData} onSwitchToList={onSwitchToList} />;
+}
+
+function ListView({
+  loading,
+  error,
+  zones,
+  onEdit,
+  onCreate,
+}: {
+  loading: boolean;
+  error: boolean;
+  zones: Zone[];
+  onEdit: (z: Zone) => void;
+  onCreate: () => void;
+}) {
+  if (loading) return <p className="text-sm text-muted">Loading zones…</p>;
+  if (error) return <p className="text-sm text-red-700">Couldn't load zones.</p>;
+  if (zones.length === 0) {
+    return (
+      <EmptyState
+        title="No zones yet"
+        description="Create your first zone to start organising your garden."
+        action={<Button onClick={onCreate}>Create a zone</Button>}
+      />
+    );
+  }
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {zones.map((zone) => (
+        <ZoneCard key={zone.id} zone={zone} onEdit={() => onEdit(zone)} />
+      ))}
     </div>
   );
 }
 
 function ZoneCard({ zone, onEdit }: { zone: Zone; onEdit: () => void }) {
   const remove = useDeleteZone();
+  const palette = ZONE_PALETTE[zone.colorToken];
   return (
     <Card className="flex flex-col gap-4 p-6">
-      <div>
-        <h2 className="text-lg font-semibold text-ink">{zone.name}</h2>
-        {zone.description && (
-          <p className="mt-1.5 text-sm text-muted">{zone.description}</p>
-        )}
+      <div className="flex items-start gap-3">
+        <Swatch token={zone.colorToken} size={28} />
+        <div className="min-w-0 flex-1">
+          <h2 className="text-lg font-semibold text-ink">{zone.name}</h2>
+          <p className="text-xs uppercase tracking-wide text-muted">
+            {zone.kind === 'structure' ? 'Structure' : 'Area'} · {palette.label}
+          </p>
+          {zone.description && (
+            <p className="mt-1.5 text-sm text-muted">{zone.description}</p>
+          )}
+        </div>
       </div>
       <div className="mt-auto flex items-center gap-2 pt-2">
         <Button variant="secondary" size="sm" onClick={onEdit}>
@@ -87,68 +183,6 @@ function ZoneCard({ zone, onEdit }: { zone: Zone; onEdit: () => void }) {
           Delete
         </Button>
       </div>
-    </Card>
-  );
-}
-
-function ZoneForm({
-  zone,
-  onClose,
-  onSaved,
-}: {
-  zone?: Zone;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const create = useCreateZone();
-  const update = useUpdateZone();
-  const editing = !!zone;
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setError,
-  } = useForm<ZoneCreateRequest>({
-    resolver: zodResolver(ZoneCreateRequestSchema),
-    defaultValues: { name: zone?.name ?? '', description: zone?.description ?? '' },
-  });
-
-  const onSubmit = handleSubmit(async (values) => {
-    try {
-      if (editing && zone) {
-        await update.mutateAsync({ id: zone.id, body: values });
-      } else {
-        await create.mutateAsync(values);
-      }
-      onSaved();
-    } catch (err) {
-      setError('root', { message: (err as Error).message });
-    }
-  });
-
-  return (
-    <Card>
-      <form onSubmit={onSubmit} className="flex flex-col gap-5 p-6" noValidate>
-        <h2 className="text-xl font-semibold text-ink">
-          {editing ? 'Edit zone' : 'New zone'}
-        </h2>
-        <Field label="Name" htmlFor="name" error={errors.name?.message}>
-          <Input id="name" type="text" autoFocus {...register('name')} />
-        </Field>
-        <Field label="Description" htmlFor="description" error={errors.description?.message}>
-          <Textarea id="description" {...register('description')} />
-        </Field>
-        {errors.root && <p className="text-sm text-red-700">{errors.root.message}</p>}
-        <div className="flex items-center justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {editing ? 'Save changes' : 'Create zone'}
-          </Button>
-        </div>
-      </form>
     </Card>
   );
 }

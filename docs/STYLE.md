@@ -35,6 +35,26 @@ Calm, organic, modern. Premium consumer-app feel rather than utilitarian dashboa
 
 Avoid: pure white surfaces, pure black, saturated traffic-light reds/yellows. Status colors should be desaturated if introduced later.
 
+### Map palette
+
+Used exclusively by the [garden map](./MAP.md). Two harmonized sub-palettes — area (planted) and structure (built). Both render with the same treatment (solid fill + 1–2px outline one step darker); the structure greys read as built without needing hatch. Tokens are stored on `zones.color_token`; the frontend is the source of truth for token → hex.
+
+| Token | Hex (approx) | Kind |
+|---|---|---|
+| `moss` | `#7A8B69` | area |
+| `fern` | `#92A380` | area |
+| `olive` | `#9C9968` | area |
+| `pine` | `#65775E` | area |
+| `terracotta` | `#C9A07C` | area |
+| `sand` | `#D6C49E` | area |
+| `dusty-rose` | `#C9A9A2` | area |
+| `lavender` | `#B0A8C0` | area |
+| `slate` | `#8E8E84` | structure |
+| `charcoal` | `#5C5C58` | structure |
+| `stone` | `#B0AC9F` | structure |
+
+Empty cells render as ivory subtle (`#E8E5DA`) — one shade darker than the surrounding cream card surface, applying the "grouped section" pattern so the map is visually distinguishable from the toolbar/rail without a stroke.
+
 ## Typography
 
 - **Family:** modern geometric sans-serif. Suggested: `Inter`, `General Sans`, or `Manrope`. One family throughout.

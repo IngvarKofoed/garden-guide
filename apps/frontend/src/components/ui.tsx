@@ -45,7 +45,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 
 interface FieldProps {
   label: string;
-  htmlFor: string;
+  htmlFor?: string;
   error?: string;
   hint?: string;
   children: ReactNode;

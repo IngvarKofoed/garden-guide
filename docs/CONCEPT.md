@@ -27,7 +27,7 @@ A hobbyist gardener who:
 The single shared garden hosted by the instance. All users of the instance see and edit the same plants, zones, tasks, and journal. Each entry records *who* added or did it.
 
 ### Zone
-A user-named area of the garden — e.g. "front bed", "greenhouse", "vegetable patch by the shed". Plants belong to a zone (optional). Zones are created by users; the app ships with no presets.
+A user-named area of the garden — e.g. "front bed", "greenhouse", "vegetable patch by the shed". Plants belong to a zone (optional). Zones are created by users; the app ships with no presets. Each zone has a **kind** (planted *area* or built *structure*) and an optional painted shape on the [garden map](./MAP.md).
 
 ### Plant
 An individual plant or tree in the garden. Has:
@@ -68,7 +68,8 @@ Reminders triggered when a care task's date range starts (and optionally as it e
 6. **Notifications** — opt-in per task or per category, delivered per user.
 7. **Shared garden, multiple users** — everyone in the household sees and edits the same garden; journal entries are attributed to the user who wrote them.
 8. **Zones** — user-created garden areas; plants can be filtered and viewed per zone.
-9. **Export & backup** — full export of the garden's data (plants, tasks, journal, zones) as JSON plus a photo archive, downloadable from the UI.
+9. **Map** — paint zones onto a top-down layout of the property; a calm, soft visualization of what's where. See [MAP.md](./MAP.md).
+10. **Export & backup** — full export of the garden's data (plants, tasks, journal, zones) as JSON plus a photo archive, downloadable from the UI.
 
 ## AI capabilities
 

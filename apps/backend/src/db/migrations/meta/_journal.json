@@ -50,6 +50,13 @@
       "when": 1777202000000,
       "tag": "0006_one_off_year_slot",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1777306170126,
+      "tag": "0007_garden_map",
+      "breakpoints": true
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 Self-hosted, single-instance web app: a private gardening guide with plants, zones, recurring/one-off care tasks, journal, calendar views, and scoped LLM assistance. One shared garden per instance, multiple users, invite-only registration.
 
-> **Read first:** [docs/CONCEPT.md](docs/CONCEPT.md) for product scope. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for tech stack, data model, API, deployment. [docs/STYLE.md](docs/STYLE.md) for the visual design system (frontend work).
+> **Read first:** [docs/CONCEPT.md](docs/CONCEPT.md) for product scope. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for tech stack, data model, API, deployment. [docs/STYLE.md](docs/STYLE.md) for the visual design system (frontend work). [docs/MAP.md](docs/MAP.md) for the garden map feature.
 >
 > **Status:** docs + folder layout in place; no code scaffolded yet.
 

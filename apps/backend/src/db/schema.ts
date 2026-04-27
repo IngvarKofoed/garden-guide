@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  blob,
   check,
   foreignKey,
   index,
@@ -43,6 +44,8 @@ export const zones = sqliteTable('zones', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
+  kind: text('kind', { enum: ['area', 'structure'] }).notNull().default('area'),
+  colorToken: text('color_token').notNull().default('moss'),
   createdAt: text('created_at').notNull(),
 });
 
@@ -210,6 +213,19 @@ export const settings = sqliteTable('settings', {
   value: text('value').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
+
+export const gardenMap = sqliteTable(
+  'garden_map',
+  {
+    id: text('id').primaryKey().default('main'),
+    width: integer('width').notNull(),
+    height: integer('height').notNull(),
+    cells: blob('cells', { mode: 'buffer' }).notNull(),
+    zoneIndex: text('zone_index').notNull().default('[]'),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (t) => [check('garden_map_singleton_check', sql`${t.id} = 'main'`)],
+);
 
 // Re-exported placeholders to silence unused-import warnings if needed by callers.
 export const _internal = { primaryKey };

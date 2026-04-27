@@ -9,6 +9,9 @@ import {
   type CareTaskUpdateRequest,
   type GardenContext,
   type GardenContextUpdateRequest,
+  type GardenMap,
+  type GardenMapCanvasPatchRequest,
+  type GardenMapPutRequest,
   type Health,
   type IdentifyPlantRequest,
   type IdentifyPlantResponse,
@@ -392,4 +395,18 @@ export function updateGardenContext(
     method: 'PUT',
     body,
   });
+}
+
+// --- Map ---
+
+export function getMap(): Promise<GardenMap> {
+  return request<GardenMap>('/api/v1/map');
+}
+
+export function putMap(body: GardenMapPutRequest): Promise<GardenMap> {
+  return request<GardenMap>('/api/v1/map', { method: 'PUT', body });
+}
+
+export function patchMapCanvas(body: GardenMapCanvasPatchRequest): Promise<GardenMap> {
+  return request<GardenMap>('/api/v1/map/canvas', { method: 'PATCH', body });
 }

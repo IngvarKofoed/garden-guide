@@ -84,6 +84,7 @@ garden-guide/
 │   │   │   │   ├── photos/
 │   │   │   │   ├── tasks/        # care tasks (recurring + one-off)
 │   │   │   │   ├── journal/
+│   │   │   │   ├── map/          # garden map (see docs/MAP.md)
 │   │   │   │   ├── notifications/
 │   │   │   │   └── ai/           # plant id, care plan suggestions
 │   │   │   ├── scheduler/        # in-process cron loop
@@ -177,7 +178,18 @@ zones (
   id              text pk,
   name            text not null,
   description     text,
+  kind            text not null default 'area',     // 'area' | 'structure' — see MAP.md
+  color_token     text not null,                    // palette slug; see STYLE.md → Map palette
   created_at      text not null
+)
+
+garden_map (                                        // singleton — one shared map per instance
+  id              text pk default 'main' check (id = 'main'),
+  width           integer not null,                 // cells
+  height          integer not null,
+  cells           blob,                             // packed Uint16Array; len = width*height
+  zone_index      text not null default '[]',      // JSON array of zone_ids; index 0 = empty
+  updated_at      text not null
 )
 
 plants (
@@ -336,6 +348,11 @@ GET    /api/v1/calendar?from=YYYY-MM-DD&to=YYYY-MM-DD
        # returns recurring tasks expanded into the requested window,
        # one-off tasks, and journal entries — already merged and
        # sorted, ready for the calendar UI.
+
+# Map (see docs/MAP.md)
+GET    /api/v1/map                   # { width, height, cells (base64), zoneIndex }
+PUT    /api/v1/map                   # full replace — body matches the GET shape
+PATCH  /api/v1/map/canvas            # { width?, height?, anchor? } — resize / extend
 
 # AI
 POST   /api/v1/ai/identify-plant     # body: { name?, photoId? }  → { candidates: [...] }

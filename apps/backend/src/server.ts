@@ -12,6 +12,7 @@ import { registerAuthRoutes } from './modules/auth/routes.js';
 import { registerCalendarRoutes } from './modules/calendar/routes.js';
 import { registerInviteRoutes } from './modules/invites/routes.js';
 import { registerJournalRoutes } from './modules/journal/routes.js';
+import { registerMapRoutes } from './modules/map/routes.js';
 import { registerPhotoRoutes } from './modules/photos/routes.js';
 import { registerPlantRoutes } from './modules/plants/routes.js';
 import { registerSettingsRoutes } from './modules/settings/routes.js';
@@ -96,6 +97,7 @@ export async function buildServer(deps: AppDeps) {
   await registerTaskRoutes(app);
   await registerCalendarRoutes(app);
   await registerJournalRoutes(app);
+  await registerMapRoutes(app);
   await registerPhotoRoutes(app);
   await registerSettingsRoutes(app);
   await registerAiRoutes(app);
