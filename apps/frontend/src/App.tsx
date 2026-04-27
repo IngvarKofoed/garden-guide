@@ -9,6 +9,7 @@ import { SettingsPage } from './features/settings/SettingsPage';
 import { ZonesPage } from './features/zones/ZonesPage';
 import { CalendarPage } from './routes/Calendar';
 import { Home } from './routes/Home';
+import { PlantEditPage } from './routes/PlantEditPage';
 import { PlantPage } from './routes/PlantPage';
 
 const router = createBrowserRouter([
@@ -52,6 +53,14 @@ const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <PlantPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: '/plants/:id/edit',
+        element: (
+          <RequireAuth>
+            <PlantEditPage />
           </RequireAuth>
         ),
       },

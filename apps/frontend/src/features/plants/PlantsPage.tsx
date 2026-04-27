@@ -6,7 +6,7 @@ import {
 } from '@garden-guide/shared';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -25,11 +25,11 @@ import { useZones } from '../zones/hooks';
 import { useArchivePlant, useCreatePlant, usePlants, useUpdatePlant } from './hooks';
 
 export function PlantsPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [zoneFilter, setZoneFilter] = useState('');
   const [archivedView, setArchivedView] = useState<'false' | 'only'>('false');
   const [showCreate, setShowCreate] = useState(false);
-  const [editing, setEditing] = useState<Plant | null>(null);
 
   const zones = useZones();
   const plants = usePlants({
@@ -100,13 +100,12 @@ export function PlantsPage() {
       </Card>
 
       {showCreate && (
-        <PlantForm onClose={() => setShowCreate(false)} onSaved={() => setShowCreate(false)} />
-      )}
-      {editing && (
         <PlantForm
-          plant={editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => setEditing(null)}
+          onClose={() => setShowCreate(false)}
+          onSaved={(plant) => {
+            setShowCreate(false);
+            navigate(`/plants/${plant.id}/edit`);
+          }}
         />
       )}
 
@@ -134,7 +133,7 @@ export function PlantsPage() {
               key={plant.id}
               plant={plant}
               zoneName={zones.data?.find((z) => z.id === plant.zoneId)?.name ?? null}
-              onEdit={() => setEditing(plant)}
+              onEdit={() => navigate(`/plants/${plant.id}/edit`)}
             />
           ))}
         </div>
@@ -249,14 +248,14 @@ function CardSeedIcon() {
   );
 }
 
-function PlantForm({
+export function PlantForm({
   plant,
   onClose,
   onSaved,
 }: {
   plant?: Plant;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (plant: Plant) => void;
 }) {
   const create = useCreatePlant();
   const update = useUpdatePlant();
@@ -295,12 +294,11 @@ function PlantForm({
         notes: values.notes?.trim() || null,
         zoneId: values.zoneId || null,
       };
-      if (editing && plant) {
-        await update.mutateAsync({ id: plant.id, body });
-      } else {
-        await create.mutateAsync(body);
-      }
-      onSaved();
+      const saved =
+        editing && plant
+          ? await update.mutateAsync({ id: plant.id, body })
+          : await create.mutateAsync(body);
+      onSaved(saved);
     } catch (err) {
       setError('root', { message: (err as Error).message });
     }

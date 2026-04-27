@@ -3,7 +3,6 @@ import type { CareTask } from '@garden-guide/shared';
 import { slotLabel, yearSlotLabel } from '@garden-guide/shared';
 import { Button, Card, EmptyState, Tag } from '../components/ui';
 import { plantIconUrl } from '../lib/api';
-import { CarePlanReview } from '../features/ai/CarePlanReview';
 import { JournalEntryForm } from '../features/journal/JournalEntryForm';
 import { JournalList } from '../features/journal/JournalList';
 import { useArchivePlant, usePlant } from '../features/plants/hooks';
@@ -71,20 +70,28 @@ export function PlantPage() {
           </div>
         </div>
         {!p.archivedAt && (
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={archive.isPending}
-            onClick={() => {
-              if (
-                confirm(`Archive "${p.name}"? Its journal history is preserved.`)
-              ) {
-                archive.mutate(p.id);
-              }
-            }}
-          >
-            Archive
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/plants/${p.id}/edit`}
+              className="inline-flex h-9 items-center rounded-full bg-ivory px-4 text-sm font-medium text-ink transition-colors hover:bg-hairline/60"
+            >
+              Edit plant
+            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={archive.isPending}
+              onClick={() => {
+                if (
+                  confirm(`Archive "${p.name}"? Its journal history is preserved.`)
+                ) {
+                  archive.mutate(p.id);
+                }
+              }}
+            >
+              Archive
+            </Button>
+          </div>
         )}
       </header>
 
@@ -119,7 +126,15 @@ export function PlantPage() {
         )}
         {tasks.data && tasks.data.length === 0 && (
           <p className="mt-3 text-sm text-muted">
-            No tasks yet. Use the AI care plan below to seed one.
+            No tasks yet.{' '}
+            {!p.archivedAt && (
+              <Link
+                to={`/plants/${p.id}/edit`}
+                className="text-leaf hover:underline"
+              >
+                Add one or generate a care plan.
+              </Link>
+            )}
           </p>
         )}
         {tasks.data && tasks.data.length > 0 && (
@@ -130,8 +145,6 @@ export function PlantPage() {
           </ul>
         )}
       </Card>
-
-      {!p.archivedAt && <CarePlanReview plantId={p.id} />}
 
       <Card className="p-6">
         <header className="flex items-center justify-between">
@@ -153,7 +166,7 @@ export function PlantPage() {
       {p.archivedAt && (
         <EmptyState
           title="Plant is archived"
-          description="Unarchive to add new tasks, generate a care plan, or write journal entries."
+          description="Unarchive to edit details, manage tasks, or write journal entries."
         />
       )}
     </div>

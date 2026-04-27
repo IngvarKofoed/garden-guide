@@ -6,6 +6,7 @@ import {
   type CarePlanResponse,
   type CareTask,
   type CareTaskCreateRequest,
+  type CareTaskUpdateRequest,
   type GardenContext,
   type GardenContextUpdateRequest,
   type Health,
@@ -190,6 +191,20 @@ export function createTask(
     method: 'POST',
     body,
   });
+}
+
+export function updateTask(
+  taskId: string,
+  body: CareTaskUpdateRequest,
+): Promise<CareTask> {
+  return request<CareTask>(`/api/v1/tasks/${taskId}`, {
+    method: 'PATCH',
+    body,
+  });
+}
+
+export function deleteTask(taskId: string): Promise<void> {
+  return request<void>(`/api/v1/tasks/${taskId}`, { method: 'DELETE' });
 }
 
 // --- Calendar ---
