@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { CalendarOccurrence } from '@garden-guide/shared';
+import { journalPhotoUrl } from '../../lib/api';
 import { ACTION_LABELS, ACTION_TONES, ActionIcon } from './actionStyle';
 import { PlantBadge } from './PlantBadge';
 import { occurrenceTitle, occurrenceWindowLabel } from './util';
@@ -11,19 +12,27 @@ interface OccurrenceDetailProps {
 
 export function OccurrenceDetail({ occ, onClose }: OccurrenceDetailProps) {
   const tone = ACTION_TONES[occ.actionType];
+  const isJournal = occ.kind === 'journal';
   const isOneOff = occ.kind === 'one_off';
-  const isCompleted = !!occ.completedOn;
+  const isCompleted = occ.kind !== 'journal' && !!occ.completedOn;
+  const plantName = occ.plantName ?? (isJournal ? 'No plant' : '');
+
+  const kindCaption = isJournal
+    ? 'journal'
+    : isOneOff
+      ? 'one-off'
+      : 'recurring';
 
   return (
     <aside
       className="relative overflow-hidden rounded-[28px] bg-cream p-6 shadow-card md:p-7"
       role="dialog"
-      aria-label={`${occurrenceTitle(occ)} for ${occ.plantName}`}
+      aria-label={`${occurrenceTitle(occ)}${plantName ? ` for ${plantName}` : ''}`}
     >
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-1.5"
-        style={{ background: tone.accent, opacity: 0.85 }}
+        style={{ background: tone.accent, opacity: isJournal ? 0.5 : 0.85 }}
       />
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3.5">
@@ -53,15 +62,14 @@ export function OccurrenceDetail({ occ, onClose }: OccurrenceDetailProps) {
               className="text-[11px] font-medium uppercase tracking-[0.18em]"
               style={{ color: tone.accent }}
             >
-              {ACTION_LABELS[occ.actionType]}
-              {isOneOff ? ' · one-off' : ' · recurring'}
+              {ACTION_LABELS[occ.actionType]} · {kindCaption}
               {isCompleted ? ' · done' : ''}
             </p>
             <h3 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-ink">
               {occurrenceTitle(occ)}
             </h3>
             <p className="mt-1 text-sm text-muted">
-              {occ.plantName}
+              {plantName || 'Garden note'}
               {occ.plantSpecies && (
                 <>
                   <span className="px-1.5 text-muted/40">·</span>
@@ -85,10 +93,12 @@ export function OccurrenceDetail({ occ, onClose }: OccurrenceDetailProps) {
 
       <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
         <DetailRow label="Window" value={occurrenceWindowLabel(occ)} />
-        <DetailRow
-          label="Dates"
-          value={`${formatLong(occ.startDate)} – ${formatLong(occ.endDate)}`}
-        />
+        {!isJournal && (
+          <DetailRow
+            label="Dates"
+            value={`${formatLong(occ.startDate)} – ${formatLong(occ.endDate)}`}
+          />
+        )}
         {isCompleted && occ.completedOn && (
           <DetailRow label="Completed" value={formatLong(occ.completedOn)} />
         )}
@@ -100,13 +110,37 @@ export function OccurrenceDetail({ occ, onClose }: OccurrenceDetailProps) {
         </div>
       )}
 
+      {isJournal && occ.photoIds.length > 0 && (
+        <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {occ.photoIds.map((photoId) => (
+            <a
+              key={photoId}
+              href={journalPhotoUrl(occ.journalId, photoId)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block overflow-hidden rounded-xl bg-ivory/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/60"
+            >
+              <img
+                src={journalPhotoUrl(occ.journalId, photoId)}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="aspect-square w-full object-cover transition-transform duration-200 ease-leaf hover:scale-[1.02]"
+              />
+            </a>
+          ))}
+        </div>
+      )}
+
       <div className="mt-6 flex items-center justify-end gap-2">
-        <Link
-          to={`/plants/${occ.plantId}`}
-          className="inline-flex h-10 items-center rounded-full bg-ink px-5 text-sm font-medium text-cream transition-colors duration-200 ease-leaf hover:bg-ink/90"
-        >
-          Open plant
-        </Link>
+        {occ.plantId && (
+          <Link
+            to={`/plants/${occ.plantId}`}
+            className="inline-flex h-10 items-center rounded-full bg-ink px-5 text-sm font-medium text-cream transition-colors duration-200 ease-leaf hover:bg-ink/90"
+          >
+            Open plant
+          </Link>
+        )}
       </div>
     </aside>
   );

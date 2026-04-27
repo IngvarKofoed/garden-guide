@@ -3,9 +3,14 @@ import { ACTION_LABELS, ACTION_TONES, ActionIcon } from './actionStyle';
 import { PlantBadge } from './PlantBadge';
 import { occurrenceKey, occurrenceTitle, occurrenceWindowLabel, parseYmd } from './util';
 
+// The digest only shows pending care work; journal entries are filtered out
+// upstream, so the local type assumes a task occurrence with non-null plant
+// fields.
+type TaskOccurrence = Exclude<CalendarOccurrence, { kind: 'journal' }>;
+
 interface UpcomingDigestProps {
   today: Date;
-  occurrences: CalendarOccurrence[];
+  occurrences: TaskOccurrence[];
   onSelect: (occ: CalendarOccurrence) => void;
   selectedKey: string | null;
 }
@@ -13,7 +18,7 @@ interface UpcomingDigestProps {
 interface Bucket {
   label: string;
   caption: string;
-  items: CalendarOccurrence[];
+  items: TaskOccurrence[];
 }
 
 export function UpcomingDigest({
@@ -79,7 +84,7 @@ function DigestRow({
   selected,
   onSelect,
 }: {
-  occ: CalendarOccurrence;
+  occ: TaskOccurrence;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -141,15 +146,15 @@ function DigestRow({
   );
 }
 
-function bucketize(today: Date, occurrences: CalendarOccurrence[]): Bucket[] {
+function bucketize(today: Date, occurrences: TaskOccurrence[]): Bucket[] {
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const tomorrow = addDays(startOfToday, 1);
   const inSeven = addDays(startOfToday, 7);
   const inFourteen = addDays(startOfToday, 14);
 
-  const active: CalendarOccurrence[] = [];
-  const within7: CalendarOccurrence[] = [];
-  const within14: CalendarOccurrence[] = [];
+  const active: TaskOccurrence[] = [];
+  const within7: TaskOccurrence[] = [];
+  const within14: TaskOccurrence[] = [];
 
   for (const occ of occurrences) {
     const start = parseYmd(occ.startDate);
@@ -164,7 +169,7 @@ function bucketize(today: Date, occurrences: CalendarOccurrence[]): Bucket[] {
     }
   }
 
-  const byStart = (a: CalendarOccurrence, b: CalendarOccurrence) =>
+  const byStart = (a: TaskOccurrence, b: TaskOccurrence) =>
     a.startDate.localeCompare(b.startDate);
   active.sort(byStart);
   within7.sort(byStart);

@@ -4,6 +4,8 @@ import { slotLabel, yearSlotLabel } from '@garden-guide/shared';
 import { Button, Card, EmptyState, Tag } from '../components/ui';
 import { plantIconUrl } from '../lib/api';
 import { CarePlanReview } from '../features/ai/CarePlanReview';
+import { JournalEntryForm } from '../features/journal/JournalEntryForm';
+import { JournalList } from '../features/journal/JournalList';
 import { useArchivePlant, usePlant } from '../features/plants/hooks';
 import { useTasksForPlant } from '../features/tasks/hooks';
 import { useZones } from '../features/zones/hooks';
@@ -131,10 +133,27 @@ export function PlantPage() {
 
       {!p.archivedAt && <CarePlanReview plantId={p.id} />}
 
+      <Card className="p-6">
+        <header className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-ink">Journal</h2>
+          <span className="text-xs text-muted">
+            What's been done and observed
+          </span>
+        </header>
+        {!p.archivedAt && (
+          <div className="mt-4 rounded-2xl bg-cream/70 p-5">
+            <JournalEntryForm plantId={p.id} />
+          </div>
+        )}
+        <div className="mt-5">
+          <JournalList plantId={p.id} readOnly={!!p.archivedAt} />
+        </div>
+      </Card>
+
       {p.archivedAt && (
         <EmptyState
           title="Plant is archived"
-          description="Unarchive to add new tasks or generate a care plan."
+          description="Unarchive to add new tasks, generate a care plan, or write journal entries."
         />
       )}
     </div>

@@ -1,4 +1,5 @@
 import {
+  type ActionType,
   type ApiError,
   type CalendarOccurrence,
   type CarePlanRequest,
@@ -11,6 +12,9 @@ import {
   type IdentifyPlantRequest,
   type IdentifyPlantResponse,
   type InviteCreateResponse,
+  type JournalEntryCreateRequest,
+  type JournalEntryWithPhotos,
+  type JournalPhoto,
   type Plant,
   type PlantCreateRequest,
   type PlantDescriptionRequest,
@@ -285,6 +289,79 @@ export function acceptPlantIconDraft(plantId: string): Promise<Plant> {
 
 export function deletePlantIconDraft(plantId: string): Promise<Plant> {
   return request<Plant>(`/api/v1/plants/${plantId}/icon/draft`, { method: 'DELETE' });
+}
+
+// --- Journal ---
+
+export interface JournalListOptions {
+  plantId?: string;
+  from?: string;
+  to?: string;
+  actionType?: ActionType;
+}
+
+export function listJournal(
+  opts: JournalListOptions = {},
+): Promise<JournalEntryWithPhotos[]> {
+  const params = new URLSearchParams();
+  if (opts.plantId) params.set('plantId', opts.plantId);
+  if (opts.from) params.set('from', opts.from);
+  if (opts.to) params.set('to', opts.to);
+  if (opts.actionType) params.set('actionType', opts.actionType);
+  const qs = params.toString();
+  return request<JournalEntryWithPhotos[]>(`/api/v1/journal${qs ? `?${qs}` : ''}`);
+}
+
+export function createJournal(
+  body: JournalEntryCreateRequest,
+): Promise<JournalEntryWithPhotos> {
+  return request<JournalEntryWithPhotos>('/api/v1/journal', {
+    method: 'POST',
+    body,
+  });
+}
+
+export function deleteJournal(id: string): Promise<void> {
+  return request<void>(`/api/v1/journal/${id}`, { method: 'DELETE' });
+}
+
+export function journalPhotoUrl(journalId: string, photoId: string): string {
+  return `/api/v1/journal/${journalId}/photos/${photoId}`;
+}
+
+export async function uploadJournalPhoto(
+  journalId: string,
+  file: Blob,
+): Promise<JournalPhoto> {
+  const form = new FormData();
+  form.append('photo', file, 'photo');
+  const res = await fetch(`/api/v1/journal/${journalId}/photos`, {
+    method: 'POST',
+    credentials: 'include',
+    body: form,
+  });
+  let payload: unknown = null;
+  try {
+    payload = await res.json();
+  } catch {
+    /* non-JSON */
+  }
+  if (!res.ok) {
+    const err = (payload as ApiError | null)?.error;
+    throw new ApiRequestError(
+      res.status,
+      err?.code ?? 'UNKNOWN_ERROR',
+      err?.message ?? `${res.status} ${res.statusText}`,
+      err?.details,
+    );
+  }
+  return payload as JournalPhoto;
+}
+
+export function deleteJournalPhoto(journalId: string, photoId: string): Promise<void> {
+  return request<void>(`/api/v1/journal/${journalId}/photos/${photoId}`, {
+    method: 'DELETE',
+  });
 }
 
 // --- Settings ---

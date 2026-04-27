@@ -1,9 +1,9 @@
 import { plantIconUrl } from '../../lib/api';
 
 interface PlantBadgeProps {
-  plantId: string;
+  plantId: string | null;
   iconPhotoId: string | null;
-  plantName: string;
+  plantName: string | null;
   /** px, drives both width/height and inner type sizing */
   size: number;
   /** Optional ring color (typically the action tone accent) */
@@ -30,7 +30,7 @@ export function PlantBadge({
     boxShadow: ring ? `0 0 0 1.5px ${ring}, 0 0 0 2.5px rgba(242,239,230,0.95)` : undefined,
   } as const;
 
-  if (iconPhotoId) {
+  if (plantId && iconPhotoId) {
     return (
       <span
         className={`inline-flex shrink-0 overflow-hidden rounded-full bg-cream ${className}`}
@@ -48,8 +48,11 @@ export function PlantBadge({
     );
   }
 
-  const initial = plantName.trim().charAt(0).toUpperCase() || '·';
+  // No icon — show either the plant name's initial, or a "no plant" glyph for
+  // free-floating journal entries.
   const fontSize = Math.max(9, Math.round(size * 0.42));
+  const trimmed = plantName?.trim() ?? '';
+  const initial = trimmed.charAt(0).toUpperCase();
 
   return (
     <span
@@ -63,7 +66,20 @@ export function PlantBadge({
       }}
       aria-hidden
     >
-      {initial}
+      {initial || (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ width: Math.round(size * 0.52), height: Math.round(size * 0.52) }}
+        >
+          <path d="M5 4h11l3 3v13H5z" />
+          <path d="M8 9h8M8 13h8M8 17h5" opacity="0.7" />
+        </svg>
+      )}
     </span>
   );
 }

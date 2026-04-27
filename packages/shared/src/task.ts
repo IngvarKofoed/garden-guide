@@ -137,8 +137,33 @@ export const OneOffOccurrenceSchema = CalendarOccurrenceBase.extend({
   endDate: IsoDateSchema,
 });
 
+/**
+ * A journal entry rendered on the calendar. Plant fields are nullable because
+ * free-floating entries (no plant) are allowed. `startDate` and `endDate` are
+ * both set to `occurredOn` so the same packing/clipping logic that handles
+ * task occurrences works unchanged.
+ */
+export const JournalOccurrenceSchema = z.object({
+  kind: z.literal('journal'),
+  journalId: UlidSchema,
+  occurredOn: IsoDateSchema,
+  startDate: IsoDateSchema,
+  endDate: IsoDateSchema,
+  actionType: ActionTypeSchema,
+  customLabel: z.string().nullable(),
+  notes: z.string().nullable(),
+  plantId: UlidSchema.nullable(),
+  plantName: z.string().nullable(),
+  plantSpecies: z.string().nullable(),
+  plantIconPhotoId: UlidSchema.nullable(),
+  zoneId: UlidSchema.nullable(),
+  createdBy: UlidSchema,
+  photoIds: z.array(UlidSchema),
+});
+
 export const CalendarOccurrenceSchema = z.discriminatedUnion('kind', [
   RecurringOccurrenceSchema,
   OneOffOccurrenceSchema,
+  JournalOccurrenceSchema,
 ]);
 export type CalendarOccurrence = z.infer<typeof CalendarOccurrenceSchema>;

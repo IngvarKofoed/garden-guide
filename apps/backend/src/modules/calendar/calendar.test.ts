@@ -166,6 +166,92 @@ describe('GET /api/v1/calendar', () => {
     expect(occs[0]!.completedOn).toBe('2026-04-12');
   });
 
+  it('merges journal entries (with plant fields and free-floating) into the response', async () => {
+    await t.app.inject({
+      method: 'POST',
+      url: '/api/v1/journal',
+      headers: { cookie },
+      payload: {
+        plantId,
+        occurredOn: '2026-04-25',
+        actionType: 'prune',
+        notes: 'Removed crossing branches.',
+      },
+    });
+    await t.app.inject({
+      method: 'POST',
+      url: '/api/v1/journal',
+      headers: { cookie },
+      payload: {
+        occurredOn: '2026-05-02',
+        actionType: 'inspect',
+        notes: 'Walked the beds, checked irrigation.',
+      },
+    });
+
+    const res = await t.app.inject({
+      method: 'GET',
+      url: '/api/v1/calendar?from=2026-01-01&to=2026-12-31',
+      headers: { cookie },
+    });
+    expect(res.statusCode).toBe(200);
+    const occs = res.json() as Array<{
+      kind: string;
+      plantId: string | null;
+      plantName: string | null;
+      occurredOn?: string;
+      startDate: string;
+    }>;
+    expect(occs).toHaveLength(2);
+    const tied = occs.find((o) => o.plantId !== null)!;
+    expect(tied.kind).toBe('journal');
+    expect(tied.plantName).toBe('Apple tree');
+    expect(tied.startDate).toBe('2026-04-25');
+    const free = occs.find((o) => o.plantId === null)!;
+    expect(free.kind).toBe('journal');
+    expect(free.plantName).toBeNull();
+    expect(free.startDate).toBe('2026-05-02');
+  });
+
+  it('keeps journal entries on archived plants visible in the calendar', async () => {
+    await t.app.inject({
+      method: 'POST',
+      url: '/api/v1/journal',
+      headers: { cookie },
+      payload: { plantId, occurredOn: '2026-04-25', actionType: 'prune' },
+    });
+    await t.app.inject({
+      method: 'DELETE',
+      url: `/api/v1/plants/${plantId}`,
+      headers: { cookie },
+    });
+    const res = await t.app.inject({
+      method: 'GET',
+      url: '/api/v1/calendar?from=2026-01-01&to=2026-12-31',
+      headers: { cookie },
+    });
+    const occs = res.json() as Array<{ kind: string; plantName: string | null }>;
+    expect(occs).toHaveLength(1);
+    expect(occs[0]!.kind).toBe('journal');
+    // Plant still exists (soft delete), so plantName is present.
+    expect(occs[0]!.plantName).toBe('Apple tree');
+  });
+
+  it('omits journal entries that fall outside the requested window', async () => {
+    await t.app.inject({
+      method: 'POST',
+      url: '/api/v1/journal',
+      headers: { cookie },
+      payload: { plantId, occurredOn: '2025-12-31', actionType: 'prune' },
+    });
+    const res = await t.app.inject({
+      method: 'GET',
+      url: '/api/v1/calendar?from=2026-01-01&to=2026-12-31',
+      headers: { cookie },
+    });
+    expect(res.json()).toHaveLength(0);
+  });
+
   it('rejects from > to', async () => {
     const res = await t.app.inject({
       method: 'GET',

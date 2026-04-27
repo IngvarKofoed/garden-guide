@@ -186,7 +186,11 @@ export function CalendarPage() {
       {!isLoading && (
         <UpcomingDigest
           today={today}
-          occurrences={occurrences}
+          // The digest is "what to do" — past observations don't belong here.
+          occurrences={occurrences.filter(
+            (o): o is Exclude<CalendarOccurrence, { kind: 'journal' }> =>
+              o.kind !== 'journal',
+          )}
           onSelect={onSelect}
           selectedKey={selectedKey}
         />

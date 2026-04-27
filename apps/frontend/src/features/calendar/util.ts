@@ -105,7 +105,10 @@ export function occurrenceKey(occ: CalendarOccurrence): string {
   if (occ.kind === 'recurring') {
     return `${occ.taskId}-${occ.year}-${occ.startDate}`;
   }
-  return `${occ.taskId}-${occ.dueSlot}`;
+  if (occ.kind === 'one_off') {
+    return `${occ.taskId}-${occ.dueSlot}`;
+  }
+  return `j-${occ.journalId}`;
 }
 
 export function occurrenceTitle(occ: CalendarOccurrence): string {
@@ -117,12 +120,16 @@ function defaultActionLabel(action: CalendarOccurrence['actionType']): string {
 }
 
 /**
- * "early March – late September" or "early March 2027" (one-off).
+ * "early March – late September" or "early March 2027" (one-off), or a
+ * formatted long date for journal entries.
  */
 export function occurrenceWindowLabel(occ: CalendarOccurrence): string {
   if (occ.kind === 'one_off') {
     const ys = parseYearSlot(occ.dueSlot);
     return `${slotLabel(formatSlot(ys.month, ys.position))} ${ys.year}`;
+  }
+  if (occ.kind === 'journal') {
+    return formatLongDate(occ.occurredOn);
   }
   const start = parseYmd(occ.startDate);
   const end = parseYmd(occ.endDate);
@@ -130,6 +137,15 @@ export function occurrenceWindowLabel(occ: CalendarOccurrence): string {
   const endSlot = dateToSlot(end);
   if (startSlot === endSlot) return slotLabel(startSlot);
   return `${slotLabel(startSlot)} – ${slotLabel(endSlot)}`;
+}
+
+function formatLongDate(ymd: string): string {
+  const [y, m, d] = ymd.split('-').map((p) => Number(p));
+  return new Date(y!, m! - 1, d!).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 export function monthName(monthIdx: number): string {

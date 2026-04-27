@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   ActionTypeSchema,
+  CalendarOccurrenceSchema,
   CareTaskSchema,
   IsoDateSchema,
+  JournalEntryCreateRequestSchema,
+  JournalEntryUpdateRequestSchema,
+  JournalListQuerySchema,
   MonthSlotSchema,
   parseSlot,
   parseYearSlot,
@@ -77,6 +81,71 @@ describe('shared schemas', () => {
       position: 3,
     });
     expect(yearSlotLabel('2027-07-3')).toBe('late July 2027');
+  });
+
+  it('accepts a journal entry create request with optional plant and notes', () => {
+    expect(
+      JournalEntryCreateRequestSchema.parse({
+        plantId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+        occurredOn: '2026-04-25',
+        actionType: 'prune',
+        notes: 'Removed crossing branches.',
+      }),
+    ).toMatchObject({ plantId: '01ARZ3NDEKTSV4RRFFQ69G5FAV', actionType: 'prune' });
+
+    // free-floating: no plant
+    expect(
+      JournalEntryCreateRequestSchema.parse({
+        occurredOn: '2026-04-25',
+        actionType: 'inspect',
+      }),
+    ).toMatchObject({ actionType: 'inspect' });
+  });
+
+  it('requires customLabel when actionType is "custom"', () => {
+    expect(() =>
+      JournalEntryCreateRequestSchema.parse({
+        occurredOn: '2026-04-25',
+        actionType: 'custom',
+      }),
+    ).toThrow(/customLabel/);
+  });
+
+  it('parses a journal update with partial fields', () => {
+    expect(
+      JournalEntryUpdateRequestSchema.parse({ notes: 'Edited.' }),
+    ).toEqual({ notes: 'Edited.' });
+  });
+
+  it('discriminates a journal calendar occurrence (free-floating)', () => {
+    const occ = CalendarOccurrenceSchema.parse({
+      kind: 'journal',
+      journalId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+      occurredOn: '2026-04-25',
+      startDate: '2026-04-25',
+      endDate: '2026-04-25',
+      actionType: 'inspect',
+      customLabel: null,
+      notes: null,
+      plantId: null,
+      plantName: null,
+      plantSpecies: null,
+      plantIconPhotoId: null,
+      zoneId: null,
+      createdBy: '01ARZ3NDEKTSV4RRFFQ69G5FAW',
+      photoIds: [],
+    });
+    expect(occ.kind).toBe('journal');
+  });
+
+  it('parses a journal list query with filters', () => {
+    expect(
+      JournalListQuerySchema.parse({
+        from: '2026-04-01',
+        to: '2026-04-30',
+        actionType: 'prune',
+      }),
+    ).toMatchObject({ from: '2026-04-01', actionType: 'prune' });
   });
 
   it('expands year-slot to day range (year-aware end of February)', () => {

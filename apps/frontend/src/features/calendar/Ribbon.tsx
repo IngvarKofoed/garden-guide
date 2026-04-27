@@ -209,23 +209,33 @@ function Lane({
         const key = occurrenceKey(it.occ);
         const isSelected = selectedKey === key;
         const isOneOff = it.occ.kind === 'one_off';
-        const isCompleted = !!it.occ.completedOn;
+        const isJournal = it.occ.kind === 'journal';
+        const isCompleted = it.occ.kind !== 'journal' && !!it.occ.completedOn;
         const cascade = laneIdx * 28 + idx * 18;
+        const plantLabel = it.occ.plantName ?? (isJournal ? 'Garden note' : '');
+        const titleAttr = plantLabel
+          ? `${occurrenceTitle(it.occ)} · ${plantLabel}`
+          : occurrenceTitle(it.occ);
 
         return (
           <button
             key={key}
             type="button"
             onClick={() => onSelect(it.occ)}
-            title={`${occurrenceTitle(it.occ)} · ${it.occ.plantName}`}
-            className={`group absolute top-0 flex h-9 items-center gap-2 overflow-hidden rounded-full pl-1 pr-3 text-left outline-none ring-offset-cream transition-[box-shadow,transform] duration-200 ease-leaf focus-visible:ring-2 focus-visible:ring-ink/70 focus-visible:ring-offset-2 ${
-              isSelected ? 'shadow-[0_0_0_2px_rgba(15,15,15,0.85)]' : ''
-            } ${isCompleted ? 'opacity-55' : ''}`}
+            title={titleAttr}
+            className={`group absolute flex items-center gap-2 overflow-hidden text-left outline-none ring-offset-cream transition-[box-shadow,transform] duration-200 ease-leaf focus-visible:ring-2 focus-visible:ring-ink/70 focus-visible:ring-offset-2 ${
+              isJournal
+                ? 'top-1.5 h-6 rounded-full pl-1 pr-3 opacity-80'
+                : 'top-0 h-9 rounded-full pl-1 pr-3'
+            } ${isSelected ? 'shadow-[0_0_0_2px_rgba(15,15,15,0.85)]' : ''} ${
+              isCompleted ? 'opacity-55' : ''
+            }`}
             style={{
               left: `calc(${leftPct}% + 2px)`,
               width: `calc(${widthPct}% - 4px)`,
-              minWidth: 32,
-              backgroundColor: tone.bar,
+              minWidth: isJournal ? 24 : 32,
+              backgroundColor: isJournal ? 'transparent' : tone.bar,
+              boxShadow: isJournal ? `inset 0 0 0 1px ${tone.ring}` : undefined,
               color: tone.text,
               animation: 'gg-bar-in 320ms ease-out both',
               animationDelay: `${cascade}ms`,
@@ -235,16 +245,27 @@ function Lane({
               plantId={it.occ.plantId}
               iconPhotoId={it.occ.plantIconPhotoId}
               plantName={it.occ.plantName}
-              size={26}
+              size={isJournal ? 18 : 26}
               ring={isOneOff ? tone.accent : undefined}
               fallbackBg="rgba(242,239,230,0.85)"
               fallbackText={tone.text}
             />
-            <ActionIcon type={it.occ.actionType} className="h-[14px] w-[14px] shrink-0" />
-            <span className="truncate text-[12.5px] font-medium leading-none">
+            <ActionIcon
+              type={it.occ.actionType}
+              className={isJournal ? 'h-3 w-3 shrink-0' : 'h-[14px] w-[14px] shrink-0'}
+            />
+            <span
+              className={`truncate font-medium leading-none ${
+                isJournal ? 'text-[11.5px]' : 'text-[12.5px]'
+              }`}
+            >
               <span className="opacity-90">{occurrenceTitle(it.occ)}</span>
-              <span className="px-1 opacity-40">·</span>
-              <span>{it.occ.plantName}</span>
+              {plantLabel && (
+                <>
+                  <span className="px-1 opacity-40">·</span>
+                  <span>{plantLabel}</span>
+                </>
+              )}
             </span>
             {isCompleted && (
               <span

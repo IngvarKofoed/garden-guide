@@ -1,4 +1,4 @@
-import { and, between, eq, gte, inArray, isNull, lte } from 'drizzle-orm';
+import { and, asc, between, eq, gte, inArray, isNull, lte } from 'drizzle-orm';
 import {
   MonthSlotSchema,
   slotIndex,
@@ -9,7 +9,13 @@ import {
   type MonthSlot,
 } from '@garden-guide/shared';
 import type { Db } from '../../db/client.js';
-import { careTasks, plants, taskCompletions } from '../../db/schema.js';
+import {
+  careTasks,
+  journalEntries,
+  journalPhotos,
+  plants,
+  taskCompletions,
+} from '../../db/schema.js';
 import { ValidationError } from '../../lib/errors.js';
 
 interface PlantCols {
@@ -208,6 +214,68 @@ export async function getCalendar(
         completedOn: completed,
       });
     }
+  }
+
+  // Journal entries that occurred inside the window. Plant fields are
+  // left-joined: free-floating entries (plant_id IS NULL) and entries on
+  // archived plants both come back — the journal is the historical record.
+  const journalRows = await db
+    .select({
+      id: journalEntries.id,
+      plantId: journalEntries.plantId,
+      occurredOn: journalEntries.occurredOn,
+      actionType: journalEntries.actionType,
+      customLabel: journalEntries.customLabel,
+      notes: journalEntries.notes,
+      createdBy: journalEntries.createdBy,
+      plantName: plants.name,
+      plantSpecies: plants.species,
+      plantIconPhotoId: plants.iconPhotoId,
+      zoneId: plants.zoneId,
+    })
+    .from(journalEntries)
+    .leftJoin(plants, eq(journalEntries.plantId, plants.id))
+    .where(
+      and(
+        gte(journalEntries.occurredOn, fromYmd),
+        lte(journalEntries.occurredOn, toYmd),
+      ),
+    );
+
+  const journalIds = journalRows.map((r) => r.id);
+  const journalPhotoRows =
+    journalIds.length === 0
+      ? []
+      : await db
+          .select({ id: journalPhotos.id, journalId: journalPhotos.journalId })
+          .from(journalPhotos)
+          .where(inArray(journalPhotos.journalId, journalIds))
+          .orderBy(asc(journalPhotos.createdAt));
+  const photosByEntry = new Map<string, string[]>();
+  for (const p of journalPhotoRows) {
+    const list = photosByEntry.get(p.journalId) ?? [];
+    list.push(p.id);
+    photosByEntry.set(p.journalId, list);
+  }
+
+  for (const r of journalRows) {
+    occurrences.push({
+      kind: 'journal',
+      journalId: r.id,
+      occurredOn: r.occurredOn,
+      startDate: r.occurredOn,
+      endDate: r.occurredOn,
+      actionType: r.actionType as CalendarOccurrence['actionType'],
+      customLabel: r.customLabel ?? null,
+      notes: r.notes ?? null,
+      plantId: r.plantId ?? null,
+      plantName: r.plantName ?? null,
+      plantSpecies: r.plantSpecies ?? null,
+      plantIconPhotoId: r.plantIconPhotoId ?? null,
+      zoneId: r.zoneId ?? null,
+      createdBy: r.createdBy,
+      photoIds: photosByEntry.get(r.id) ?? [],
+    });
   }
 
   occurrences.sort((a, b) => a.startDate.localeCompare(b.startDate));
